@@ -10,9 +10,19 @@ Each directory contains a self-contained agent or skill definition:
 
 - `eng-manager-plan/` — Engineering manager plan review skill
 
+## Setup
+
+```bash
+# Symlink all skills into ~/.claude/skills (default)
+./setup.sh
+
+# Or specify a different target directory
+./setup.sh -t ~/.cursor/skills
+```
+
 ## Usage
 
-Skills are invoked via slash commands in Claude Code (e.g., `/plan-eng-review`). To use a skill, copy its directory into your project or reference it from your Claude Code configuration.
+Skills are invoked via slash commands in Claude Code (e.g., `/plan-eng-review`).
 
 ## License
 
