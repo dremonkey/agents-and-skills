@@ -24,6 +24,11 @@ Each directory contains a self-contained agent or skill definition:
 
 Skills are invoked via slash commands in Claude Code (e.g., `/plan-eng-review`).
 
+## Authoring guidance
+
+- Claude-focused guidance: `CLAUDE.md`
+- Cursor-focused guidance: `CURSOR.md`
+
 ## License
 
 MIT
