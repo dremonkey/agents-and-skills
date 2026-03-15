@@ -1,0 +1,14 @@
+{
+  "name": "agents-and-skills",
+  "version": "1.0.0",
+  "description": "Agent definitions and skill prompts for Claude Code — plan review, technical architecture drafting, and more.",
+  "author": {
+    "name": "ahanyu"
+  },
+  "repository": "https://github.com/dremonkey/agents-and-skills",
+  "license": "MIT",
+  "skills": "./skills/",
+  "requires": {
+    "skills": ["excalidraw-diagram-skill"]
+  }
+}

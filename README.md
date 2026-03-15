@@ -1,28 +1,39 @@
 # Agents and Skills
 
-A collection of agent definitions and skill prompts for Claude Code.
-
-These are designed for Claude Code's agent and skill system but can be used by any harness that supports the same format.
+A Claude Code plugin packaging agent definitions and skill prompts.
 
 ## Structure
 
-Each directory contains a self-contained agent or skill definition:
-
-- `eng-manager-plan/` — Engineering manager plan review skill
+```
+.claude-plugin/
+  plugin.json                        — Plugin manifest
+skills/
+  eng-manager-plan/                  — Engineering manager plan review skill
+  draft-technical-architecture/      — Technical architecture drafting skill
+```
 
 ## Setup
 
 ```bash
-# Symlink all skills into ~/.claude/skills (default)
-./setup.sh
+# Install as a Claude Code plugin (local)
+claude plugin install ./agents-and-skills
 
-# Or specify a different target directory
-./setup.sh -t ~/.cursor/skills
+# Install from GitHub
+claude plugin install github:dremonkey/agents-and-skills
+
+# Validate the plugin
+claude plugin validate
 ```
+
+## Dependencies
+
+Some skills reference other skills that must be installed separately:
+
+- **excalidraw-diagram-skill** — used by `draft-technical-architecture` for system-level Excalidraw diagrams
 
 ## Usage
 
-Skills are invoked via slash commands in Claude Code (e.g., `/plan-eng-review`).
+Skills are invoked via slash commands in Claude Code (e.g., `/eng-manager-plan`).
 
 ## Authoring guidance
 
