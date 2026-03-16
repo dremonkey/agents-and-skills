@@ -9,6 +9,7 @@ A Claude Code plugin packaging agent definitions and skill prompts.
 | `plan-eng-tasks` | Engineering manager execution lead | Converts approved scope into dependency-aware task plans and drives execution via structured tasks and sub-agents. |
 | `plan-ceo-review` | CEO/founder strategic reviewer | Challenges plans at product and strategic levels with expansion/hold/reduction review modes. |
 | `plan-cto-review` | CTO technical reviewer | Performs deep technical readiness review across architecture, risks, security, testing, and rollout. |
+| `orchestrate-initiative-planning` | Planning workflow orchestrator | Coordinates CEO review, CTO review, and engineering task planning from PRD through EPICs and task files without implementation. |
 | `draft-technical-architecture` | Technical architect | Produces architecture drafts with clear system design, tradeoffs, and implementation direction. |
 
 ## Structure
@@ -72,6 +73,7 @@ Recommended handoff flow:
 - `plan-ceo-review` -> `vision/<INITIATIVE>/...`
 - `plan-cto-review` -> `docs/architecture/<INITIATIVE>/` + `tasks/<EPIC_NAME>/EPIC.md`
 - `plan-eng-tasks` -> updates `tasks/<EPIC_NAME>/...` and `docs/architecture/<INITIATIVE>/` as implementation details are discovered
+- `orchestrate-initiative-planning` -> coordinates the full handoff across all three stages
 
 ## Authoring guidance
 
