@@ -7,8 +7,5 @@
   },
   "repository": "https://github.com/dremonkey/agents-and-skills",
   "license": "MIT",
-  "skills": "./skills/",
-  "requires": {
-    "skills": ["excalidraw-diagram-skill"]
-  }
+  "skills": "./skills/"
 }

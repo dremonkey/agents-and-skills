@@ -25,20 +25,35 @@ skills/
 
 ## Installation
 
+### Claude Code (symlink)
+
+Symlink each skill into `~/.claude/skills/`:
+
 ```bash
-# Install as a Claude Code plugin (local)
-claude plugin install ./agents-and-skills
+for skill in skills/*/; do
+  ln -sfn "$(pwd)/$skill" ~/.claude/skills/"$(basename "$skill")"
+done
+```
 
-# Install from GitHub
-claude plugin install github:dremonkey/agents-and-skills
+Or use the helper script:
 
-# Validate the plugin
-claude plugin validate
+```bash
+./setup.sh ~/.claude/skills
+```
+
+Skills will be available as slash commands (e.g., `/plan-eng-tasks`) in your next session.
+
+### Claude Code (per-session plugin)
+
+Load the entire repo as a plugin for a single session:
+
+```bash
+claude --plugin-dir /path/to/agents-and-skills
 ```
 
 ### Cursor (and other compatible harnesses)
 
-Use the symlink helper script to link every skill in `skills/` into your local skills directory:
+Use the symlink helper script to link every skill into your local skills directory:
 
 ```bash
 # Default target: ~/.cursor/skills
