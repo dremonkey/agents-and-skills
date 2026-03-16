@@ -8,7 +8,7 @@ Restructure this skills repo so it works as a Claude Code plugin — installable
 
 ```
 agents-and-skills/
-├── eng-manager-plan/
+├── plan-eng-tasks/
 │   └── SKILL.md
 ├── draft-technical-architecture/
 │   └── SKILL.md
@@ -27,7 +27,7 @@ agents-and-skills/
 ├── .claude-plugin/
 │   └── plugin.json       ← manifest (metadata, component paths)
 ├── skills/
-│   ├── eng-manager-plan/
+│   ├── plan-eng-tasks/
 │   │   └── SKILL.md      ← unchanged
 │   ├── draft-technical-architecture/
 │   │   └── SKILL.md      ← unchanged
@@ -71,7 +71,7 @@ Move each `<skill-name>/` directory into a `skills/` subdirectory so the plugin'
 
 ```bash
 mkdir skills
-git mv eng-manager-plan skills/
+git mv plan-eng-tasks skills/
 git mv draft-technical-architecture skills/
 # repeat for any future skill directories
 ```

@@ -1,5 +1,5 @@
 ---
-name: eng-manager-plan
+name: plan-eng-tasks
 version: 2.0.0
 description: |
   Eng manager-mode plan review + execution. Lock in the execution plan — architecture,

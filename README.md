@@ -7,12 +7,13 @@ A Claude Code plugin packaging agent definitions and skill prompts.
 ```
 .claude-plugin/
   plugin.json                        — Plugin manifest
+setup.sh                             — Symlink helper for Cursor-compatible harnesses
 skills/
-  eng-manager-plan/                  — Engineering manager plan review skill
+  plan-eng-tasks/                    — Engineering manager plan review skill
   draft-technical-architecture/      — Technical architecture drafting skill
 ```
 
-## Setup
+## Installation
 
 ```bash
 # Install as a Claude Code plugin (local)
@@ -25,6 +26,20 @@ claude plugin install github:dremonkey/agents-and-skills
 claude plugin validate
 ```
 
+### Cursor (and other compatible harnesses)
+
+Use the symlink helper script to link every skill in `skills/` into your local skills directory:
+
+```bash
+# Default target: ~/.cursor/skills
+./setup.sh
+
+# Optional: provide a custom target directory
+./setup.sh "$HOME/.cursor/skills"
+```
+
+The script is idempotent: it keeps existing correct links and only creates or updates missing links.
+
 ## Dependencies
 
 Some skills reference other skills that must be installed separately:
@@ -33,7 +48,7 @@ Some skills reference other skills that must be installed separately:
 
 ## Usage
 
-Skills are invoked via slash commands in Claude Code (e.g., `/eng-manager-plan`).
+Skills are invoked via slash commands in Claude Code (e.g., `/plan-eng-tasks`).
 
 ## Authoring guidance
 
