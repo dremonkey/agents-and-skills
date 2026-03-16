@@ -1,11 +1,11 @@
 ---
 name: plan-eng-tasks
-version: 2.0.0
+version: 2.4.0
 description: |
-  Eng manager-mode plan review + execution. Lock in the execution plan — architecture,
-  data flow, diagrams, edge cases, test coverage, performance. Walks through
-  issues interactively with opinionated recommendations. Then generates task files
-  and dispatches Sonnet sub-agents to implement each task.
+  Eng manager-mode execution planning + delivery. Converts approved scope into
+  a dependency-aware task plan, generates task files, and dispatches sub-agents
+  to implement safely. Uses plan-cto-review outputs when available instead of
+  re-running deep technical diligence.
 allowed-tools:
   - Read
   - Write
@@ -17,20 +17,41 @@ allowed-tools:
   - AskUserQuestion
 ---
 
-# Plan Review + Execute Mode
+# Plan-to-Execution Mode
 
 This skill has two phases:
-1. **Phase 1 — Review:** Thorough plan review (architecture, code quality, tests, performance). No code changes.
+1. **Phase 1 — Execution Readiness:** Scope challenge, resolve decisions, and produce executable task decomposition. No code changes.
 2. **Phase 2 — Execute:** Present the implementation plan for approval, then dispatch sub-agents to implement.
 
 ---
 
-## PHASE 1: PLAN REVIEW
+## PHASE 1: EXECUTION READINESS
 
-Review this plan thoroughly before making any code changes. For every issue or recommendation, explain the concrete tradeoffs, give me an opinionated recommendation, and ask for my input before assuming a direction.
+Prepare an approved plan for execution before making any code changes. Focus on dependency-safe task decomposition, owner clarity, and execution sequencing. Do not re-run deep architecture/security/performance diligence if `plan-cto-review` outputs already exist.
+
+## Relationship to `plan-cto-review`
+`plan-cto-review` is the technical quality gate. This skill is the execution manager.
+
+When CTO outputs exist, ingest and use them as inputs:
+1. Decision Summary
+2. Technical Risk Register
+3. Failure Modes Registry
+4. Top Gaps
+5. Implementation Readiness Verdict
+
+Do not duplicate that full review. Only re-open a technical topic if:
+- a gap is unresolved,
+- scope changed materially after CTO review, or
+- a new blocker appears during decomposition.
+
+## Artifact Contract
+This skill's primary artifacts are:
+1. **Modified EPIC(s)** - update existing EPIC documents in `tasks/<EPIC_NAME>` from CTO review to reflect final execution sequencing and decisions.
+2. **Clearly defined task files** - concrete, dependency-aware implementation tasks derived from EPIC scope.
+3. **Updated architecture docs (when needed)** - capture implementation details discovered during execution that materially change or clarify architecture in `docs/architecture/<INITIATIVE>`.
 
 ## Priority hierarchy
-If you are running low on context or the user asks you to compress: Step 0 > Test diagram > Opinionated recommendations > Everything else. Never skip Step 0 or the test diagram.
+If you are running low on context or the user asks you to compress: Step 0 > dependency/task decomposition > approval-ready execution plan > everything else. Never skip Step 0.
 
 ## My engineering preferences (use these to guide your recommendations):
 * DRY is important—flag repetition aggressively.
@@ -55,49 +76,41 @@ Before reviewing anything, answer these questions:
 
 Then ask if I want one of three options:
 1. **SCOPE REDUCTION:** The plan is overbuilt. Propose a minimal version that achieves the core goal, then review that.
-2. **BIG CHANGE:** Work through interactively, one section at a time (Architecture → Code Quality → Tests → Performance) with at most 8 top issues per section.
-3. **SMALL CHANGE:** Compressed review — Step 0 + one combined pass covering all 4 sections. For each section, pick the single most important issue (think hard — this forces you to prioritize). Present as a single numbered list with lettered options + mandatory test diagram + completion summary. One AskUserQuestion round at the end. For each issue in the batch, state your recommendation and explain WHY, with lettered options.
+2. **BIG CHANGE:** Work through interactively, one section at a time (CTO handoff alignment → decomposition and dependencies → test/rollout readiness) with at most 8 top issues per section.
+3. **SMALL CHANGE:** Compressed pass — Step 0 + one combined pass across the 3 sections above. Pick the single highest-leverage issue per section and finish with a completion summary. One AskUserQuestion round at the end.
 
 **Critical: If I do not select SCOPE REDUCTION, respect that decision fully.** Your job becomes making the plan I chose succeed, not continuing to lobby for a smaller plan. Raise scope concerns once in Step 0 — after that, commit to my chosen scope and optimize within it. Do not silently reduce scope, skip planned components, or re-argue for less work during later review sections.
 
-## Review Sections (after scope is agreed)
+## Readiness Sections (after scope is agreed)
 
-### 1. Architecture review
-Evaluate:
-* Overall system design and component boundaries.
-* Dependency graph and coupling concerns.
-* Data flow patterns and potential bottlenecks.
-* Scaling characteristics and single points of failure.
-* Security architecture (auth, data access, API boundaries).
-* Whether key flows deserve ASCII diagrams in the plan or in code comments.
-* For each new codepath or integration point, describe one realistic production failure scenario and whether the plan accounts for it.
+### 1. CTO handoff alignment
+If a CTO review exists, map its outputs into execution constraints:
+* Convert each **Top Gap** into either: (a) required precondition, (b) dedicated task, or (c) explicit deferral.
+* Ensure each high-severity risk in the **Technical Risk Register** has a named mitigation task or acceptance decision.
+* Ensure each critical entry in the **Failure Modes Registry** is covered by tests, handling work, or a clear non-goal.
+* If no CTO review exists, run only a lightweight sanity pass to identify blockers for decomposition (do not do a full technical diligence pass).
 
 **STOP.** For each issue found in this section, call AskUserQuestion individually. One issue per call. Present options, state your recommendation, explain WHY. Do NOT batch multiple issues into one AskUserQuestion. Only proceed to the next section after ALL issues in this section are resolved.
 
-### 2. Code quality review
+### 2. Task decomposition and dependency graph
 Evaluate:
-* Code organization and module structure.
-* DRY violations—be aggressive here.
-* Error handling patterns and missing edge cases (call these out explicitly).
-* Technical debt hotspots.
-* Areas that are over-engineered or under-engineered relative to my preferences.
-* Existing ASCII diagrams in touched files — are they still accurate after this change?
+* Is every work item atomic enough for one sub-agent session?
+* Are dependencies explicit and acyclic?
+* Do tasks avoid conflicting edits to the same files?
+* Are there hidden cross-cutting tasks (migrations, feature flags, data backfills, docs)?
+* Is each task scoped to minimal diff while still satisfying acceptance criteria?
+* Are existing ASCII diagrams in touched files still accurate after proposed changes?
 
 **STOP.** For each issue found in this section, call AskUserQuestion individually. One issue per call. Present options, state your recommendation, explain WHY. Do NOT batch multiple issues into one AskUserQuestion. Only proceed to the next section after ALL issues in this section are resolved.
 
-### 3. Test review
-Make a diagram of all new UX, new data flow, new codepaths, and new branching if statements or outcomes. For each, note what is new about the features discussed in this branch and plan. Then, for each new item in the diagram, make sure there is a corresponding test.
+### 3. Test and rollout readiness
+Build an execution-readiness checklist:
+* Make a diagram of all new UX, new data flow, new codepaths, and new branching outcomes.
+* Ensure each new path has explicit test ownership in one task file.
+* Map rollout controls (flags, migrations, sequencing, rollback checks) into tasks.
+* Ensure observability essentials (logs/metrics/alerts) are assigned to specific tasks if required by CTO outputs.
 
 For LLM/prompt changes: check the "Prompt/LLM changes" file patterns listed in CLAUDE.md. If this plan touches ANY of those patterns, state which eval suites must be run, which cases should be added, and what baselines to compare against. Then use AskUserQuestion to confirm the eval scope with the user.
-
-**STOP.** For each issue found in this section, call AskUserQuestion individually. One issue per call. Present options, state your recommendation, explain WHY. Do NOT batch multiple issues into one AskUserQuestion. Only proceed to the next section after ALL issues in this section are resolved.
-
-### 4. Performance review
-Evaluate:
-* N+1 queries and database access patterns.
-* Memory-usage concerns.
-* Caching opportunities.
-* Slow or high-complexity code paths.
 
 **STOP.** For each issue found in this section, call AskUserQuestion individually. One issue per call. Present options, state your recommendation, explain WHY. Do NOT batch multiple issues into one AskUserQuestion. Only proceed to the next section after ALL issues in this section are resolved.
 
@@ -124,14 +137,11 @@ Every plan review MUST produce a "NOT in scope" section listing work that was co
 List existing code/flows that already partially solve sub-problems in this plan, and whether the plan reuses them or unnecessarily rebuilds them.
 
 ### Task file generation
-After all review sections are complete, break the approved plan into discrete, implementable tasks. Each task becomes a markdown file.
+After all readiness sections are complete, break the approved plan into discrete, implementable tasks. Each task becomes a markdown file.
 
-**Task management strategy:** Before generating files, check if the user has a preferred task management strategy (e.g., existing `tasks/` directory, Linear, Jira export format, custom structure). Use AskUserQuestion to ask:
-> "How do you want tasks managed? A) `tasks/<EPIC>/<task>.md` directory structure (Recommended) — simple, version-controlled, grep-friendly. B) Another format — describe your preference."
+**Task management strategy:** Use `tasks/<EPIC_NAME>` as the canonical location for epic and task files. Do not use alternate directory structures unless the user explicitly requests an override.
 
-If the user has an existing `tasks/` directory or similar, adapt to that structure. Otherwise, use the default: `tasks/<EPIC>/<task>.md`.
-
-**Closed tasks directory:** Tasks that are completely done (`[x]`) or cancelled should be moved into a `_closed/` subdirectory within the epic (e.g., `tasks/<EPIC>/_closed/<task>.md`). This keeps the epic directory clean — only active/pending work is visible at a glance. When reviewing or listing tasks, **ignore everything in `_closed/`** unless the user explicitly asks to check closed tasks.
+**Closed tasks directory:** Tasks that are completely done (`[x]`) or cancelled should be moved into a `_closed/` subdirectory within the epic (e.g., `tasks/<EPIC_NAME>/_closed/<task>.md`). This keeps the epic directory clean — only active/pending work is visible at a glance. When reviewing or listing tasks, **ignore everything in `_closed/`** unless the user explicitly asks to check closed tasks.
 
 **Task file format:** Use the template in `TASK_TEMPLATE.md` (same directory as this skill file). Read it before generating task files. Key points:
 - Title: `# Task <NUM>: <Title>` — number tasks sequentially within the epic.
@@ -146,7 +156,7 @@ If the user has an existing `tasks/` directory or similar, adapt to that structu
 * Present each potential task as its own individual AskUserQuestion. Never batch tasks — one per question. Never silently skip this step.
 * For each task, present options: **A)** Create task file **B)** Skip — not needed **C)** Merge into another task (specify which).
 
-**Also create the epic file** at `tasks/<EPIC>/EPIC.md` using the template in `EPIC_TEMPLATE.md` (same directory as this skill file). The epic file is the index — it contains the goal, architecture overview, task list with summaries, key decisions, and anti-goals. Create it after all task files are written so the task list is complete.
+**Update the EPIC file first when it already exists.** If no epic exists yet, create `tasks/<EPIC_NAME>/EPIC.md` using `EPIC_TEMPLATE.md` (same directory as this skill file). The epic is the source of truth for goal, architecture overview, task list summaries, key decisions, and anti-goals. Finalize/update it after task files are written so the task list is complete.
 
 **Deferred work becomes task files too.** For each item from the "NOT in scope" section that has future value, create a task file using the same template. Mark its status as `[ ]` (pending) and add a `## Deferred` section explaining: **Why deferred** (rationale), **Revisit when** (trigger condition or timeframe). These live alongside the other task files in the epic — they're just not part of the current execution plan. **Cross-reference:** Add the deferred task to the `## Relates to` section of the original task that surfaced it, and vice versa, so the connection is traceable in both directions.
 
@@ -154,7 +164,7 @@ If the user has an existing `tasks/` directory or similar, adapt to that structu
 The plan itself should use ASCII diagrams for any non-trivial data flow, state machine, or processing pipeline. Additionally, identify which files in the implementation should get inline ASCII diagram comments — particularly Models with complex state transitions, Services with multi-step pipelines, and Concerns with non-obvious mixin behavior.
 
 ### Failure modes
-For each new codepath identified in the test review diagram, list one realistic way it could fail in production (timeout, nil reference, race condition, stale data, etc.) and whether:
+For each new codepath identified in the test/rollout readiness diagram, list one realistic way it could fail in production (timeout, nil reference, race condition, stale data, etc.) and whether:
 1. A test covers that failure
 2. Error handling exists for it
 3. The user would see a clear error or a silent failure
@@ -162,15 +172,14 @@ For each new codepath identified in the test review diagram, list one realistic 
 If any failure mode has no test AND no error handling AND would be silent, flag it as a **critical gap**.
 
 ### Completion summary
-At the end of the review, fill in and display this summary so the user can see all findings at a glance:
+At the end of readiness, fill in and display this summary so the user can see all findings at a glance:
 - Step 0: Scope Challenge (user chose: ___)
-- Architecture Review: ___ issues found
-- Code Quality Review: ___ issues found
-- Test Review: diagram produced, ___ gaps identified
-- Performance Review: ___ issues found
+- CTO handoff alignment: ___ issues found
+- Task decomposition/dependencies: ___ issues found
+- Test/rollout readiness: diagram produced, ___ gaps identified
 - NOT in scope: written
 - What already exists: written
-- Epic file: created at tasks/<EPIC>/EPIC.md
+- Epic file: created at tasks/<EPIC_NAME>/EPIC.md
 - Task files: ___ created, ___ skipped
 - Deferred tasks: ___ created
 - Failure modes: ___ critical gaps flagged
@@ -192,7 +201,7 @@ If the user does not respond to an AskUserQuestion or interrupts to move on, not
 
 ## PHASE 2: EXECUTION
 
-Phase 2 begins only after Phase 1 is fully complete (all review sections done, all task files written).
+Phase 2 begins only after Phase 1 is fully complete (all readiness sections done, all task files written).
 
 ### Step 1: Present the implementation plan
 
@@ -204,12 +213,12 @@ IMPLEMENTATION PLAN
 
 Execution order (respecting dependencies):
 
-  [1] tasks/<epic>/<task-1>.md — <title> (small)
-  [2] tasks/<epic>/<task-2>.md — <title> (medium)
+  [1] tasks/<EPIC_NAME>/<task-1>.md — <title> (small)
+  [2] tasks/<EPIC_NAME>/<task-2>.md — <title> (medium)
       └── blocked by: [1]
-  [3] tasks/<epic>/<task-3>.md — <title> (small)
+  [3] tasks/<EPIC_NAME>/<task-3>.md — <title> (small)
       └── blocked by: [1]
-  [4] tasks/<epic>/<task-4>.md — <title> (large)
+  [4] tasks/<EPIC_NAME>/<task-4>.md — <title> (large)
       └── blocked by: [2], [3]
 
 Parallel execution groups:
@@ -244,7 +253,7 @@ For each approved task (respecting dependency order), spawn a sub-agent using th
 * **Model:** `sonnet` — use the `model` parameter on the Task tool.
 * **Prompt construction:** Read the task file and construct a prompt that includes:
   1. The full task file content (Goal, Context, Implementation sections, Acceptance criteria).
-  2. Any relevant context from the review (architecture decisions, engineering preferences, ASCII diagrams).
+  2. Any relevant context from readiness (constraints, decisions, engineering preferences, ASCII diagrams).
   3. The sub-agent behavioral rules below.
 * **Parallelism:** Tasks with no unresolved dependencies SHOULD run in parallel. Use `run_in_background: true` for all tasks in a parallel group except the last one, so you can monitor completion. When a group finishes, dispatch the next group.
 * **Isolation:** Use `isolation: "worktree"` so each sub-agent works on an isolated copy and can't conflict with others.
@@ -283,7 +292,7 @@ As sub-agents complete (or get stuck):
 - Any deviations — are they justified?
 If the work looks good, note it as complete and move to the next dependency group.
 
-**On failure or questions:** Act as the engineering manager. Use context from the review phase to answer the sub-agent's question or unblock it. You have full context on:
+**On failure or questions:** Act as the engineering manager. Use context from the readiness phase to answer the sub-agent's question or unblock it. You have full context on:
 - Architecture decisions and their rationale
 - Engineering preferences
 - The dependency graph and how tasks fit together
@@ -299,15 +308,20 @@ When escalating, explain what the sub-agent tried, what went wrong, and present 
 After all sub-agents complete, **update every task file and the epic to reflect the current state:**
 
 **Update each task file's status field** (the `**Status:**` line in the header):
-- Completed: change `[ ]` to `[x]`. Check off acceptance criteria that were met. Then **move the task file to `_closed/`** (e.g., `tasks/<EPIC>/_closed/<task>.md`).
+- Completed: change `[ ]` to `[x]`. Check off acceptance criteria that were met. Then **move the task file to `_closed/`** (e.g., `tasks/<EPIC_NAME>/_closed/<task>.md`).
 - Cancelled: change `[ ]` to `[x]` and add `**Cancelled:** <reason>` below the status line. Then **move the task file to `_closed/`**.
 - Failed/blocked: change `[ ]` to `[!]`. Add a `## Failure notes` section at the bottom with what went wrong and what needs manual attention. Keep in the main epic directory (still active work).
 - Not executed (deferred): leave as `[ ]`.
 
-**Update the epic file** (`tasks/<EPIC>/EPIC.md`). Use the template in `EPIC_TEMPLATE.md` (same directory as this skill file) when creating a new epic. When updating an existing epic:
+**Update the epic file** (`tasks/<EPIC_NAME>/EPIC.md`). Use the template in `EPIC_TEMPLATE.md` (same directory as this skill file) when creating a new epic. When updating an existing epic:
 - Update `**Epic Status:**` — `[x]` if all tasks done, `[~]` if in progress, `[!]` if any task is blocked.
 - Update each task's `**Status:**` in the task list section to match the individual task files.
 - For tasks moved to `_closed/`, keep their entry in the epic's task list (for historical reference) but mark them with their final status.
+
+**Update architecture docs when implementation changed the shape of the design.**
+- If implementation discoveries changed boundaries, data flow, rollout behavior, or key tradeoffs, update the relevant docs in `docs/architecture/<INITIATIVE>` in the same cycle.
+- Keep diagrams in `docs/architecture/<INITIATIVE>` consistent with the final implementation and EPIC decisions.
+- If no architecture changes were discovered, state that explicitly in the execution summary.
 
 **Reading existing epics:** When scanning an epic's directory to understand current work, **skip the `_closed/` subdirectory entirely.** Only look inside `_closed/` if the user explicitly asks to review closed or cancelled tasks.
 
@@ -331,7 +345,7 @@ Files modified (all tasks combined):
 
 Task files updated: ___
 Tasks moved to _closed/: ___
-Epic updated: tasks/<epic>/EPIC.md
+Epic updated: tasks/<EPIC_NAME>/EPIC.md
 
 Tests to run: <command to run the full test suite for changed files>
 

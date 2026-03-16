@@ -2,6 +2,15 @@
 
 A Claude Code plugin packaging agent definitions and skill prompts.
 
+## Skills
+
+| Skill name | Role | Short description |
+| --- | --- | --- |
+| `plan-eng-tasks` | Engineering manager execution lead | Converts approved scope into dependency-aware task plans and drives execution via structured tasks and sub-agents. |
+| `plan-ceo-review` | CEO/founder strategic reviewer | Challenges plans at product and strategic levels with expansion/hold/reduction review modes. |
+| `plan-cto-review` | CTO technical reviewer | Performs deep technical readiness review across architecture, risks, security, testing, and rollout. |
+| `draft-technical-architecture` | Technical architect | Produces architecture drafts with clear system design, tradeoffs, and implementation direction. |
+
 ## Structure
 
 ```
@@ -9,8 +18,8 @@ A Claude Code plugin packaging agent definitions and skill prompts.
   plugin.json                        — Plugin manifest
 setup.sh                             — Symlink helper for Cursor-compatible harnesses
 skills/
-  plan-eng-tasks/                    — Engineering manager plan review skill
-  draft-technical-architecture/      — Technical architecture drafting skill
+  <skill-name>/
+    SKILL.md
 ```
 
 ## Installation
@@ -49,6 +58,20 @@ Some skills reference other skills that must be installed separately:
 ## Usage
 
 Skills are invoked via slash commands in Claude Code (e.g., `/plan-eng-tasks`).
+
+## Artifact path conventions
+
+Use these canonical paths for planning and execution artifacts:
+
+- Product strategy artifacts: `vision/<INITIATIVE>/VISION.md` and `vision/<INITIATIVE>/PRD.<TOPIC>.md`
+- Technical architecture artifacts: `docs/architecture/<INITIATIVE>/`
+- Execution artifacts (epics + tasks): `tasks/<EPIC_NAME>/`
+
+Recommended handoff flow:
+
+- `plan-ceo-review` -> `vision/<INITIATIVE>/...`
+- `plan-cto-review` -> `docs/architecture/<INITIATIVE>/` + `tasks/<EPIC_NAME>/EPIC.md`
+- `plan-eng-tasks` -> updates `tasks/<EPIC_NAME>/...` and `docs/architecture/<INITIATIVE>/` as implementation details are discovered
 
 ## Authoring guidance
 

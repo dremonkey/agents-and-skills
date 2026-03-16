@@ -1,0 +1,165 @@
+---
+name: plan-cto-review
+version: 1.3.0
+description: |
+  CTO-level technical plan review for implementation readiness and risk control.
+  Use this skill to deeply review architecture, failure modes, security, tests,
+  performance, observability, and rollout posture before execution.
+allowed-tools:
+  - Read
+  - Grep
+  - Glob
+  - Bash
+  - AskUserQuestion
+---
+
+# CTO Technical Plan Review Mode
+
+## Purpose
+Use this skill when the plan is already defined at the product level and needs rigorous technical review before implementation.
+
+## Artifact Contract
+This skill's primary artifacts are:
+1. **Architecture diagrams** stored in `docs/architecture/<INITIATIVE>` that capture boundaries, dependencies, and critical flows.
+2. **EPIC document(s)** stored in `tasks/<EPIC_NAME>` that define implementation slices, sequencing, and constraints at an execution-planning level.
+
+These artifacts are inputs to `plan-eng-tasks`.
+
+## AskUserQuestion Format
+For each AskUserQuestion:
+1. **Re-ground:** state project, branch, and current decision needed.
+2. **Simplify:** explain the issue in plain language.
+3. **Recommend:** `RECOMMENDATION: Choose [X] because [reason]`.
+4. **Options:** `A) ... B) ... C) ...`.
+
+## Review Modes
+Choose one mode and stick to it:
+1. **SCOPE EXPANSION** - grow technical ambition where leverage is high.
+2. **HOLD SCOPE** - keep scope fixed and maximize implementation rigor.
+3. **SCOPE REDUCTION** - minimize moving parts and ship smallest robust slice.
+
+## Prime Directives
+1. Zero silent failures.
+2. Explicit error handling over generic rescues.
+3. Map happy path plus shadow paths (nil, empty, upstream failure).
+4. Treat observability and rollback as first-class scope.
+5. Name and quantify technical risks before execution.
+
+## Pre-Review System Audit
+Run:
+```bash
+git log --oneline -30
+git diff main --stat
+git stash list
+rg "TODO|FIXME|HACK|XXX" --glob "*.{rb,js,ts,tsx,py,go,java}"
+```
+
+Read `CLAUDE.md`, current plan docs, and any architecture notes in scope.
+
+## Step 0: Scope and Mode Lock
+Before deep review, confirm:
+- technical objective
+- constraints/non-goals
+- selected mode (EXPANSION / HOLD / REDUCTION)
+
+Do not drift from selected mode.
+
+## Mandatory Engineering Sections
+
+### Section 1: Architecture Review
+Evaluate:
+- component boundaries and dependency graph
+- data flow maps (happy/nil/empty/error)
+- stateful transitions and invalid states
+- coupling tradeoffs and single points of failure
+- realistic production failure scenarios
+- rollback posture and blast radius
+
+### Section 2: Error and Rescue Map
+For each critical method/codepath, map:
+- failure mode
+- exception class
+- rescue owner/action
+- user-visible outcome
+- logging/telemetry emitted
+
+Flag all unrescued critical failures as **CRITICAL GAP**.
+
+### Section 3: Security and Threat Model
+Evaluate:
+- attack surface changes
+- input validation and authz boundaries
+- secrets handling and dependency risk
+- injection vectors (SQL, command, prompt, template)
+- auditability for sensitive operations
+
+Rate each threat by likelihood and impact.
+
+### Section 4: Data Flow and Interaction Edge Cases
+For each major flow, trace:
+- input validation failure
+- timeout/retry behavior
+- stale state/concurrency issues
+- partial success/partial failure paths
+
+### Section 5: Code Quality and Complexity
+Review:
+- module boundaries and naming quality
+- DRY violations and over/under-engineering
+- error-handling consistency
+- high-branching hotspots requiring refactor
+
+### Section 6: Test Strategy and Coverage
+Require explicit test plan for:
+- happy path
+- failure path
+- edge cases and concurrency
+- external dependency failures
+
+Call out flakiness risks and missing confidence tests.
+
+### Section 7: Performance and Scalability
+Assess:
+- expensive paths and p95/p99 risks
+- query/index risks and N+1 patterns
+- memory/runtime growth behavior
+- cache and background job strategy
+
+### Section 8: Observability and Debuggability
+Require:
+- structured logs with key context
+- success/failure metrics
+- traces for cross-service flows
+- alerts and first-day dashboard plan
+- runbook hints for top failure modes
+
+### Section 9: Deployment and Rollout
+Review:
+- migration safety and compatibility windows
+- feature flag strategy
+- rollout and rollback sequence
+- post-deploy verification checklist
+
+### Section 10: Long-Term Trajectory
+Evaluate:
+- debt created vs debt paid down
+- reversibility (1-5)
+- path dependency and maintainability
+- whether this improves future velocity
+
+## Required Outputs
+Return:
+1. **Decision Summary** - Proceed / Revise / Stop, with confidence.
+2. **Technical Risk Register** - top risks, severity, owner recommendation.
+3. **Failure Modes Registry** - codepath, failure, rescued?, tested?, user sees?, logged?
+4. **Top Gaps** - max 7 critical/important gaps with concrete fixes.
+5. **Implementation Readiness Verdict** - what must be true before coding starts.
+6. **Architecture Diagrams** - include/update diagrams for system boundaries, data flow, and rollout topology where relevant.
+7. **EPIC Draft(s)** - create one or more EPIC documents at `tasks/<EPIC_NAME>/EPIC.md` that encode scope, dependencies, and key technical constraints.
+
+## Interaction Policy
+- Avoid unnecessary back-and-forth; batch related decisions.
+- Ask at most 3 high-value questions per pass.
+- If a fix is obvious and low-risk, recommend directly.
+- If 2+ critical gaps remain unresolved, recommend **Revise**.
+- If architecture or security posture is fundamentally unsafe, recommend **Stop**.
