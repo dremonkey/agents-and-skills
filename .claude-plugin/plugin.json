@@ -1,7 +1,7 @@
 {
   "name": "agents-and-skills",
-  "version": "1.0.0",
-  "description": "Agent definitions and skill prompts for Claude Code — plan review, technical architecture drafting, and more.",
+  "version": "1.1.0",
+  "description": "Agent definitions and skill prompts for Claude Code covering CEO product review, CTO technical review, architecture drafting, execution planning, and end-to-end initiative planning orchestration.",
   "author": {
     "name": "ahanyu"
   },
