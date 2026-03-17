@@ -8,10 +8,13 @@ description: |
   task files without implementing code.
 allowed-tools:
   - Read
+  - Write
   - Grep
   - Glob
+  - Bash
   - Task
   - AskUserQuestion
+  - EnterWorktree
 ---
 
 # Orchestrate Initiative Planning
@@ -24,6 +27,18 @@ Use this skill when the user wants one agent to coordinate the full planning pip
 3. Execution planning
 
 This skill is an orchestrator. It should launch sub-agents, manage handoffs, answer sub-agent questions when possible, and stop before implementation.
+
+## Workspace Isolation
+
+**All work MUST happen in a git worktree.**
+
+Before doing anything else — before reading source docs, before launching sub-agents — enter a worktree:
+
+1. Use `EnterWorktree` with a name derived from the initiative (e.g., `plan-<INITIATIVE>`).
+2. All subsequent file creation and sub-agent work happens inside the worktree.
+3. Do **not** write any planning artifacts to the main working tree.
+
+If `EnterWorktree` fails (e.g., already in a worktree), halt and ask the user how to proceed.
 
 ## Artifact Contract
 The orchestrated workflow should produce:
@@ -99,6 +114,23 @@ Stop condition:
 
 Run these EPIC-planning sub-agents in parallel only when the EPICs are independent and will not create conflicting task boundaries.
 
+### Stage 4: Push and Open PR
+
+After all planning stages complete, deliver the artifacts:
+
+1. Stage all new and modified files in the worktree.
+2. Create a commit with a clear message summarizing the planning artifacts produced (e.g., `plan(<INITIATIVE>): add vision, architecture, and task artifacts`).
+3. Push the worktree branch to the remote with `git push -u origin <branch>`.
+4. Open a pull request using `gh pr create`:
+   - Title: `plan(<INITIATIVE>): initiative planning artifacts`
+   - Body must include:
+     - Summary of artifacts created (vision docs, architecture docs, EPICs, task files)
+     - List of unresolved decisions or remaining risks
+     - Note that this is a **planning-only** PR — no product code changes
+5. Return the PR URL to the user.
+
+If the push or PR creation fails, report the error and the branch name so the user can recover manually.
+
 ## Orchestrator Behavior
 
 ### Answering Questions
@@ -134,9 +166,14 @@ Call out gaps when:
 Use this structure when the user asks to run the full workflow:
 
 ```text
-Act as the orchestration agent for a 3-stage planning workflow. Use the installed
+Act as the orchestration agent for a 4-stage planning workflow. Use the installed
 skills to move from product definition -> technical architecture -> execution
-planning.
+planning -> delivery.
+
+STAGE 0: WORKTREE SETUP
+1. Use EnterWorktree with name `plan-<INITIATIVE>` to create an isolated worktree.
+2. All subsequent work happens inside the worktree.
+3. If worktree creation fails, stop and ask me how to proceed.
 
 STAGE 1: CEO PRODUCT REVIEW
 1. Launch a sub-agent and have it apply `/plan-ceo-review` to review and improve
@@ -173,6 +210,14 @@ STAGE 3: ENGINEERING TASK PLANNING
 5. IMPORTANT: Do not implement anything.
 6. Stop after planning artifacts are complete.
 
+STAGE 4: PUSH AND OPEN PR
+1. Stage and commit all planning artifacts.
+2. Push the worktree branch to origin.
+3. Open a PR with `gh pr create`.
+4. Include in the PR body: artifacts created, unresolved decisions, and a note
+   that this is a planning-only PR with no product code.
+5. Return the PR URL to me.
+
 ORCHESTRATION RULES
 - Maintain path discipline:
   - `vision/<INITIATIVE>/...`
@@ -189,8 +234,10 @@ ORCHESTRATION RULES
 ## Final Output
 At the end of the orchestrated workflow, return:
 
-1. Artifacts created or updated
-2. EPICs produced
-3. Task files produced
-4. Unresolved decisions
-5. Remaining risks or gaps
+1. PR URL
+2. Branch name
+3. Artifacts created or updated
+4. EPICs produced
+5. Task files produced
+6. Unresolved decisions
+7. Remaining risks or gaps
