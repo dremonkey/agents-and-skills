@@ -107,6 +107,7 @@ For each approved task (respecting dependency order), spawn a sub-agent using th
   1. The full task file content (Goal, Context, Implementation sections, Acceptance criteria).
   2. Any relevant context from readiness (constraints, decisions, engineering preferences, ASCII diagrams).
   3. The sub-agent behavioral rules below.
+  4. The base branch for the PR: `BASE_BRANCH=<current branch name>` (determine this once at the start of execution via `git branch --show-current`).
 * **Parallelism:** Tasks with no unresolved dependencies SHOULD run in parallel. Use `run_in_background: true` for all tasks in a parallel group except the last one, so you can monitor completion. When a group finishes, dispatch the next group.
 * **Isolation:** Use `isolation: "worktree"` so each sub-agent works on an isolated copy and can't conflict with others.
 
@@ -131,18 +132,35 @@ RULES FOR THIS TASK:
    - Tests written and whether they pass
    - Any deviations from the task file (with justification)
    - Any unresolved issues or concerns
-7. Do not make commits. The eng manager will handle commits after reviewing your work.
+7. When you are finished, stage and commit ALL your changes in the worktree with
+   a descriptive commit message prefixed with the task filename (e.g.,
+   "task-03-auth-middleware: implement JWT validation and tests"). This is
+   required — uncommitted changes in a worktree are lost when it is cleaned up.
+8. After committing, push your branch and create a pull request using
+   `gh pr create --base <BASE_BRANCH>` (your eng manager will tell you the
+   base branch in the prompt). Use the task title as the PR title and include
+   the task's goal and acceptance criteria in the PR body. Do NOT merge the
+   PR — your eng manager will review and decide whether to merge.
 ```
 
 ## Step 4: Monitor and manage sub-agents
 
 As sub-agents complete (or get stuck):
 
-**On success:** Review the sub-agent's output summary. Check:
+**On success:** The sub-agent will have created a PR back to the base branch. Review the sub-agent's output summary and the PR. Check:
 - Did it touch only the expected files?
 - Did it write the required tests?
 - Any deviations — are they justified?
-If the work looks good, note it as complete and move to the next dependency group.
+
+If the work looks good, **merge the PR** using `gh pr merge <number> --merge`.
+
+**After merging each PR in a parallel group:**
+1. Pull the updated base branch: `git pull origin <base-branch>`.
+2. Check whether the next PR in the group can still merge cleanly: `gh pr view <number> --json mergeable`.
+3. If it has conflicts, check out that PR branch, rebase onto the updated base, resolve conflicts, push, then merge.
+4. Repeat until all PRs in the group are merged.
+
+**Before dispatching the next dependency group**, always `git pull` so the new worktrees are created from the fully updated base branch.
 
 **On failure or questions:** Act as the engineering manager. Use context from the planning phase to answer the sub-agent's question or unblock it. You have full context on:
 - Architecture decisions and their rationale
@@ -205,8 +223,10 @@ Unresolved issues:
   - <any issues that need manual attention>
 ```
 
+**Commit the bookkeeping changes** (task file status updates, moves to `_closed/`, epic updates) to the base branch with a message like `chore: update task/epic status after execution`. Push to the remote.
+
 Then use AskUserQuestion:
 > "All tasks are complete. What next?"
 > **A) Run the test suite** — verify everything works together.
-> **B) Review changes** — I'll walk you through the diffs.
-> **C) Commit** — bundle changes and create a commit.
+> **B) Review changes** — I'll walk you through the merged diffs.
+> **C) Done** — all PRs are merged; no further action needed.
