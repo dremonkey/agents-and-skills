@@ -5,7 +5,8 @@ description: |
   Orchestrates a multi-stage planning workflow across plan-ceo-review,
   plan-cto-review, draft-technical-architecture, and plan-eng-tasks. Use when
   turning a PRD or initiative into vision docs, architecture docs, EPICs, and
-  task files without implementing code.
+  task files without implementing code. After planning, use exec-eng-tasks to
+  dispatch implementation.
 allowed-tools:
   - Read
   - Write
@@ -54,12 +55,14 @@ The orchestrated workflow should produce:
 ## Core Rule
 Do not implement product code in this workflow.
 
-`plan-eng-tasks` normally has an execution phase. In this orchestrated workflow, it must stop after producing planning artifacts:
+`plan-eng-tasks` is planning-only — it produces task files but does not implement them. When execution is needed after planning, use `exec-eng-tasks` to dispatch sub-agents for implementation.
+
+In this orchestrated workflow, `plan-eng-tasks` produces:
 - updated `EPIC.md`
 - task files
 - any required architecture doc clarifications
 
-It must not dispatch implementation sub-agents or write code.
+It does not dispatch implementation sub-agents or write code. If the user wants to proceed to execution after the planning PR is merged, invoke `exec-eng-tasks` separately.
 
 ## Stage Workflow
 
