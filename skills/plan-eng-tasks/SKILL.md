@@ -169,6 +169,9 @@ For each new codepath identified in the test/rollout readiness diagram, list one
 
 If any failure mode has no test AND no error handling AND would be silent, flag it as a **critical gap**.
 
+### Commit planning artifacts
+After all task files, the epic, and any architecture docs have been written or updated, **commit them** with a descriptive message (e.g., `plan: <EPIC_NAME> — create epic and N task files`). Push to the remote. This ensures planning artifacts are versioned and available to `exec-eng-tasks` sub-agents working in worktrees.
+
 ### Completion summary
 At the end of readiness, fill in and display this summary so the user can see all findings at a glance:
 - Step 0: Scope Challenge (user chose: ___)
@@ -181,6 +184,7 @@ At the end of readiness, fill in and display this summary so the user can see al
 - Task files: ___ created, ___ skipped
 - Deferred tasks: ___ created
 - Failure modes: ___ critical gaps flagged
+- Artifacts committed: yes/no
 
 ## Retrospective learning
 Check the git log for this branch. If there are prior commits suggesting a previous review cycle (e.g., review-driven refactors, reverted changes), note what was changed and whether the current plan touches the same areas. Be more aggressive reviewing areas that were previously problematic.
