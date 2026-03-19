@@ -99,6 +99,8 @@ After Stage 2 completes, launch a separate sub-agent for each newly created EPIC
 
 Each sub-agent applies `plan-eng-tasks`.
 
+**Scope is already locked.** The orchestrator confirmed scope in Stages 1-2. Instruct each sub-agent to skip Step 0 (Scope Challenge) and begin directly at the readiness sections. Include this directive in the sub-agent prompt: `SKIP_STEP_0=true — scope was locked by the orchestrator during initiative planning. Do not re-challenge scope.`
+
 Each sub-agent consumes:
 - the relevant docs in `docs/architecture/<INITIATIVE>/`
 - the relevant `tasks/<EPIC_NAME>/EPIC.md`
@@ -203,15 +205,16 @@ STAGE 2: CTO TECHNICAL REVIEW
 STAGE 3: ENGINEERING TASK PLANNING
 1. Launch a separate sub-agent for each EPIC.
 2. Have each sub-agent apply `/plan-eng-tasks`.
-3. Inputs:
+3. Tell each sub-agent: `SKIP_STEP_0=true — scope was locked by the orchestrator. Do not re-challenge scope.`
+4. Inputs:
    - `docs/architecture/<INITIATIVE>/`
    - `tasks/<EPIC_NAME>/EPIC.md`
-4. Produce:
+5. Produce:
    - updated EPICs
    - task files
    - architecture doc clarifications only if needed
-5. IMPORTANT: Do not implement anything.
-6. Stop after planning artifacts are complete.
+6. IMPORTANT: Do not implement anything.
+7. Stop after planning artifacts are complete.
 
 STAGE 4: PUSH AND OPEN PR
 1. Stage and commit all planning artifacts.

@@ -52,12 +52,7 @@ This skill's primary artifacts are:
 If you are running low on context or the user asks you to compress: Step 0 > dependency/task decomposition > approval-ready execution plan > everything else. Never skip Step 0.
 
 ## My engineering preferences (use these to guide your recommendations):
-* DRY is important—flag repetition aggressively.
-* Well-tested code is non-negotiable; I'd rather have too many tests than too few.
-* I want code that's "engineered enough" — not under-engineered (fragile, hacky) and not over-engineered (premature abstraction, unnecessary complexity).
-* I err on the side of handling more edge cases, not fewer; thoughtfulness > speed.
-* Bias toward explicit over clever.
-* Minimal diff: achieve the goal with the fewest new abstractions and files touched.
+Read `skills/shared/ENGINEERING_PREFERENCES.md` for the full list. Use these preferences to guide all recommendations and map your reasoning to specific preferences when explaining WHY.
 
 ## Documentation and diagrams:
 * I value ASCII art diagrams highly — for data flow, state machines, dependency graphs, processing pipelines, and decision trees. Use them liberally in plans and design docs.
@@ -67,6 +62,8 @@ If you are running low on context or the user asks you to compress: Step 0 > dep
 ## BEFORE YOU START:
 
 ### Step 0: Scope Challenge
+**If `SKIP_STEP_0=true` was set by the orchestrator, skip this entire step and proceed to the readiness sections.** Scope was already locked during initiative planning.
+
 Before reviewing anything, answer these questions:
 1. **What existing code already partially or fully solves each sub-problem?** Can we capture outputs from existing flows rather than building parallel ones?
 2. **What is the minimum set of changes that achieves the stated goal?** Flag any work that could be deferred without blocking the core objective. Be ruthless about scope creep.
@@ -88,7 +85,7 @@ If a CTO review exists, map its outputs into execution constraints:
 * Ensure each critical entry in the **Failure Modes Registry** is covered by tests, handling work, or a clear non-goal.
 * If no CTO review exists, run only a lightweight sanity pass to identify blockers for decomposition (do not do a full technical diligence pass).
 
-**STOP.** For each issue found in this section, call AskUserQuestion individually. One issue per call. Present options, state your recommendation, explain WHY. Do NOT batch multiple issues into one AskUserQuestion. Only proceed to the next section after ALL issues in this section are resolved.
+**STOP.** Batch issues from this section into AskUserQuestion calls — up to 3-5 issues per call, grouped by theme. Each issue still needs its own numbered entry with lettered options, a recommendation, and a WHY. Only proceed to the next section after ALL issues in this section are resolved.
 
 ### 2. Task decomposition and dependency graph
 Evaluate:
@@ -99,7 +96,7 @@ Evaluate:
 * Is each task scoped to minimal diff while still satisfying acceptance criteria?
 * Are existing ASCII diagrams in touched files still accurate after proposed changes?
 
-**STOP.** For each issue found in this section, call AskUserQuestion individually. One issue per call. Present options, state your recommendation, explain WHY. Do NOT batch multiple issues into one AskUserQuestion. Only proceed to the next section after ALL issues in this section are resolved.
+**STOP.** Batch issues from this section into AskUserQuestion calls — up to 3-5 issues per call, grouped by theme. Each issue still needs its own numbered entry with lettered options, a recommendation, and a WHY. Only proceed to the next section after ALL issues in this section are resolved.
 
 ### 3. Test and rollout readiness
 Build an execution-readiness checklist:
@@ -110,14 +107,14 @@ Build an execution-readiness checklist:
 
 For LLM/prompt changes: check the "Prompt/LLM changes" file patterns listed in CLAUDE.md. If this plan touches ANY of those patterns, state which eval suites must be run, which cases should be added, and what baselines to compare against. Then use AskUserQuestion to confirm the eval scope with the user.
 
-**STOP.** For each issue found in this section, call AskUserQuestion individually. One issue per call. Present options, state your recommendation, explain WHY. Do NOT batch multiple issues into one AskUserQuestion. Only proceed to the next section after ALL issues in this section are resolved.
+**STOP.** Batch issues from this section into AskUserQuestion calls — up to 3-5 issues per call, grouped by theme. Each issue still needs its own numbered entry with lettered options, a recommendation, and a WHY. Only proceed to the next section after ALL issues in this section are resolved.
 
 ## CRITICAL RULE — How to ask questions
-Every AskUserQuestion MUST: (1) present 2-3 concrete lettered options, (2) state which option you recommend FIRST, (3) explain in 1-2 sentences WHY that option over the others, mapping to engineering preferences. No batching multiple issues into one question. No yes/no questions. Open-ended questions are allowed ONLY when you have genuine ambiguity about developer intent, architecture direction, 12-month goals, or what the end user wants — and you must explain what specifically is ambiguous. **Exception:** SMALL CHANGE mode intentionally batches one issue per section into a single AskUserQuestion at the end — but each issue in that batch still requires its own recommendation + WHY + lettered options.
+Batch up to 3-5 related issues into a single AskUserQuestion call, grouped by section or theme. Each issue within the batch MUST: (1) have its own numbered entry, (2) present 2-3 concrete lettered options, (3) state which option you recommend FIRST, (4) explain in 1-2 sentences WHY that option over the others, mapping to engineering preferences. No yes/no questions. Open-ended questions are allowed ONLY when you have genuine ambiguity about developer intent, architecture direction, 12-month goals, or what the end user wants — and you must explain what specifically is ambiguous. **Exception:** SMALL CHANGE mode batches all issues into a single AskUserQuestion at the end — but each issue in that batch still requires its own recommendation + WHY + lettered options.
 
 ## For each issue you find
 For every specific issue (bug, smell, design concern, or risk):
-* **One issue = one AskUserQuestion call.** Never combine multiple issues into one question.
+* **Batch issues into AskUserQuestion calls** — up to 3-5 per call, grouped by theme. Each issue still gets its own numbered entry.
 * Describe the problem concretely, with file and line references.
 * Present 2–3 options, including "do nothing" where that's reasonable.
 * For each option, specify in one line: effort, risk, and maintenance burden.
@@ -151,8 +148,11 @@ After all readiness sections are complete, break the approved plan into discrete
 * Each task should be completable by a single sub-agent in one session. If a task is "large", consider splitting it.
 * Tasks must have clear boundaries — no two tasks should modify the same file in conflicting ways. If unavoidable, make one block the other.
 * Order tasks by dependency graph. Tasks with no dependencies come first.
-* Present each potential task as its own individual AskUserQuestion. Never batch tasks — one per question. Never silently skip this step.
-* For each task, present options: **A)** Create task file **B)** Skip — not needed **C)** Merge into another task (specify which).
+* Present all proposed tasks in a single AskUserQuestion for batch approval. For each task, show: number, title, size estimate, and dependencies. Then offer:
+  **A)** Approve all tasks as shown.
+  **B)** Select/deselect individual tasks — list the numbers to change.
+  **C)** Edit — describe what to merge, split, or re-scope.
+  Never silently skip this approval step.
 
 **Update the EPIC file first when it already exists.** If no epic exists yet, create `tasks/<EPIC_NAME>/EPIC.md` using `EPIC_TEMPLATE.md` (same directory as this skill file). The epic is the source of truth for goal, architecture overview, task list summaries, key decisions, and anti-goals. Finalize/update it after task files are written so the task list is complete.
 

@@ -33,12 +33,7 @@ If these artifacts do not exist, stop and tell the user to run `plan-eng-tasks` 
 
 ## Engineering preferences (included in sub-agent prompts)
 
-* DRY is important — flag repetition aggressively.
-* Well-tested code is non-negotiable; I'd rather have too many tests than too few.
-* I want code that's "engineered enough" — not under-engineered (fragile, hacky) and not over-engineered (premature abstraction, unnecessary complexity).
-* I err on the side of handling more edge cases, not fewer; thoughtfulness > speed.
-* Bias toward explicit over clever.
-* Minimal diff: achieve the goal with the fewest new abstractions and files touched.
+Read `skills/shared/ENGINEERING_PREFERENCES.md` and include its contents in every sub-agent prompt.
 
 ## Status markers
 
@@ -111,37 +106,7 @@ For each approved task (respecting dependency order), spawn a sub-agent using th
 * **Parallelism:** Tasks with no unresolved dependencies SHOULD run in parallel. Use `run_in_background: true` for all tasks in a parallel group except the last one, so you can monitor completion. When a group finishes, dispatch the next group.
 * **Isolation:** Use `isolation: "worktree"` so each sub-agent works on an isolated copy and can't conflict with others.
 
-**Sub-agent behavioral rules** (include these verbatim in every sub-agent prompt):
-```
-RULES FOR THIS TASK:
-1. You are implementing a single task from an engineering plan. Your eng manager
-   (the parent agent) has already reviewed and approved the approach.
-2. Follow the "Context" and "Implementation" sections in this task file exactly.
-   Do not deviate from the agreed design.
-3. Write all tests specified in the "Acceptance criteria" section. Tests are
-   non-negotiable.
-4. Keep your changes minimal and focused. Only touch files listed in the
-   "Implementation" section unless you discover a necessary change — in which
-   case, document why.
-5. If you get stuck or have a question:
-   - First, re-read the task file (especially "Context" and "Implementation").
-   - If still stuck, describe the problem clearly in your output. Your eng manager
-     will review and provide guidance. Do NOT ask the user directly.
-6. When done, output a clear summary:
-   - Files created/modified (with brief description of each change)
-   - Tests written and whether they pass
-   - Any deviations from the task file (with justification)
-   - Any unresolved issues or concerns
-7. When you are finished, stage and commit ALL your changes in the worktree with
-   a descriptive commit message prefixed with the task filename (e.g.,
-   "task-03-auth-middleware: implement JWT validation and tests"). This is
-   required — uncommitted changes in a worktree are lost when it is cleaned up.
-8. After committing, push your branch and create a pull request using
-   `gh pr create --base <BASE_BRANCH>` (your eng manager will tell you the
-   base branch in the prompt). Use the task title as the PR title and include
-   the task's goal and acceptance criteria in the PR body. Do NOT merge the
-   PR — your eng manager will review and decide whether to merge.
-```
+**Sub-agent behavioral rules:** Read `skills/shared/SUB_AGENT_RULES.md` and include its contents verbatim in every sub-agent prompt.
 
 ## Step 4: Monitor and manage sub-agents
 

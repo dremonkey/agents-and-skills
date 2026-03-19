@@ -51,8 +51,6 @@ Run:
 ```bash
 git log --oneline -30
 git diff main --stat
-git stash list
-rg "TODO|FIXME|HACK|XXX" --glob "*.{rb,js,ts,tsx,py,go,java}"
 ```
 
 Read `CLAUDE.md`, current plan docs, and any architecture notes in scope.
@@ -65,7 +63,16 @@ Before deep review, confirm:
 
 Do not drift from selected mode.
 
-## Mandatory Engineering Sections
+## Step 1: Change-Size Triage
+Before running all sections, estimate the change size:
+
+- **Small** (≤3 files, single concern): Review only sections relevant to the change. At minimum: Section 5 (Code Quality), Section 6 (Test Strategy), and any section whose domain is directly affected (e.g., security changes require Section 3). Skip the rest with a one-line note.
+- **Medium** (4-10 files, 2-3 concerns): Review all sections but keep low-relevance sections to 1-2 sentences.
+- **Large** (>10 files or cross-cutting): Full review of all sections.
+
+State the triage result before proceeding.
+
+## Engineering Sections
 
 ### Section 1: Architecture Review
 Evaluate:
@@ -149,14 +156,15 @@ Evaluate:
 - whether this improves future velocity
 
 ## Required Outputs
-Return:
-1. **Decision Summary** - Proceed / Revise / Stop, with confidence.
-2. **Technical Risk Register** - top risks, severity, owner recommendation.
-3. **Failure Modes Registry** - codepath, failure, rescued?, tested?, user sees?, logged?
-4. **Top Gaps** - max 7 critical/important gaps with concrete fixes.
-5. **Implementation Readiness Verdict** - what must be true before coding starts.
-6. **Architecture Diagrams** - include/update diagrams for system boundaries, data flow, and rollout topology where relevant.
-7. **EPIC Draft(s)** - create one or more EPIC documents at `tasks/<EPIC_NAME>/EPIC.md` that encode scope, dependencies, and key technical constraints.
+Return only sections that have findings. Omit empty sections entirely — do not output a section header with "N/A" or "None."
+
+1. **Decision Summary** - Proceed / Revise / Stop, with confidence. (Always required.)
+2. **Technical Risk Register** - top risks, severity, owner recommendation. (Omit if no risks.)
+3. **Failure Modes Registry** - codepath, failure, rescued?, tested?, user sees?, logged? (Omit if no unrescued/untested failures.)
+4. **Top Gaps** - max 7 critical/important gaps with concrete fixes. (Omit if no gaps.)
+5. **Implementation Readiness Verdict** - what must be true before coding starts. (Always required.)
+6. **Architecture Diagrams** - include/update diagrams where relevant. (Omit if change does not affect architecture.)
+7. **EPIC Draft(s)** - create EPIC documents at `tasks/<EPIC_NAME>/EPIC.md`. (Omit for small changes that fit in a single task.)
 
 ## Interaction Policy
 - Avoid unnecessary back-and-forth; batch related decisions.
