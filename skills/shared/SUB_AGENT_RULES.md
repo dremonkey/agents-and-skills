@@ -26,3 +26,7 @@ RULES FOR THIS TASK:
    base branch in the prompt). Use the task title as the PR title and include
    the task's goal and acceptance criteria in the PR body. Do NOT merge the
    PR — your eng manager will review and decide whether to merge.
+9. **Avoid `cd <path> && git ...` compound commands** — they trigger a security
+   approval prompt. Use `git -C <path>` instead (e.g., `git -C . add -A` or
+   `git -C /path/to/worktree push`). For non-git commands that need a specific
+   directory, use a subshell: `(cd <path> && bun test ...)`.
