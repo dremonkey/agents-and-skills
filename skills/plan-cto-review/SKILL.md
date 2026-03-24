@@ -1,6 +1,7 @@
 ---
 name: plan-cto-review
 version: 1.3.0
+model: opus
 description: |
   CTO-level technical plan review for implementation readiness and risk control.
   Use this skill to deeply review architecture, failure modes, security, tests,

@@ -1,6 +1,7 @@
 ---
 name: plan-ceo-review
 version: 1.3.0
+model: opus
 description: |
   CEO/founder-level product review focused on strategy clarity and feature definition.
   Use this skill to pressure-test ICP, user problem statement, value proposition,

@@ -1,6 +1,7 @@
 ---
 name: plan-eng-tasks
 version: 3.0.0
+model: opus
 description: |
   Eng manager-mode execution planning. Converts approved scope into a
   dependency-aware task plan and generates task files. Uses plan-cto-review
