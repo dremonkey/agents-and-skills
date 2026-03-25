@@ -92,46 +92,58 @@ If the user chooses C, stop. The task files are the deliverable.
 
 If the user chooses B, use AskUserQuestion to let them select which tasks to execute.
 
-## Step 3: Dispatch sub-agents
+## Step 3: Create feature branch
 
-For each approved task (respecting dependency order), spawn a sub-agent using the Task tool:
+Before dispatching any work, create a single feature branch that will collect all task results:
+
+1. Record the current branch as the **target branch** (usually `main`): `git branch --show-current`.
+2. Create and check out the feature branch: `git checkout -b epic/<EPIC_NAME>`.
+3. Push the branch so it exists on the remote: `git push -u origin epic/<EPIC_NAME>`.
+
+All sub-agent worktrees will branch off this feature branch. All completed work merges back into it.
+
+## Step 4: Dispatch sub-agents
+
+For each approved task (respecting dependency order), spawn a sub-agent using the Agent tool:
 
 **Sub-agent configuration:**
-* **Model:** `sonnet` — use the `model` parameter on the Task tool.
+* **Model:** `sonnet` — use the `model` parameter on the Agent tool.
 * **Prompt construction:** Read the task file and construct a prompt that includes:
   1. The full task file content (Goal, Context, Implementation sections, Acceptance criteria).
   2. Any relevant context from readiness (constraints, decisions, engineering preferences, ASCII diagrams).
   3. The sub-agent behavioral rules below.
-  4. The base branch for the PR: `BASE_BRANCH=<current branch name>` (determine this once at the start of execution via `git branch --show-current`).
 * **Parallelism:** Tasks with no unresolved dependencies SHOULD run in parallel. Use `run_in_background: true` for all tasks in a parallel group except the last one, so you can monitor completion. When a group finishes, dispatch the next group.
 * **Isolation:** Use `isolation: "worktree"` so each sub-agent works on an isolated copy and can't conflict with others.
 
 **Sub-agent behavioral rules:** Read `skills/shared/SUB_AGENT_RULES.md` and include its contents verbatim in every sub-agent prompt.
 
-## Step 4: Monitor and manage sub-agents
+## Step 5: Monitor and merge into feature branch
 
 As sub-agents complete (or get stuck):
 
-**On success:** The sub-agent will have created a PR back to the base branch. Review the sub-agent's output summary and the PR. Check:
+**On success:** The sub-agent will have committed its changes in the worktree. The agent result includes the **worktree path** and **branch name**. Review the sub-agent's output summary. Check:
 - Did it touch only the expected files?
 - Did it write the required tests?
 - Any deviations — are they justified?
 
-If the work looks good, **merge the PR** using `gh pr merge <number> --merge`.
+If the work looks good, **squash-merge the worktree branch into the feature branch:**
+
+```bash
+git merge --squash <worktree-branch> && git commit -m "<task-filename>: <brief summary of changes>"
+```
 
 **Minimize approval prompts — avoid `cd <path> && git` patterns.**
 Compound commands that combine `cd` with `git` trigger a security approval ("bare repository attacks"). To avoid this:
 - **Use `git -C <path>` instead of `cd <path> && git ...`** for all git operations in worktrees or other directories. For example: `git -C <worktree> log --oneline -5` instead of `cd <worktree> && git log --oneline -5`.
-- **Chain related `git -C` commands** with `&&` to reduce the total number of Bash calls. For example, review a worktree in one call: `git -C <worktree> log --oneline -5 && git -C <worktree> diff --stat HEAD~1`.
-- For non-git commands that must run in a specific directory (e.g. test runners), use a subshell: `(cd <path> && bun test ...)` — this is less likely to trigger the compound command check than a bare `cd && git` chain.
+- **Chain related `git -C` commands** with `&&` to reduce the total number of Bash calls.
+- For non-git commands that must run in a specific directory (e.g. test runners), use a subshell: `(cd <path> && bun test ...)`.
 
-**After merging each PR in a parallel group:**
-1. Merge and pull: `gh pr merge <number> --merge && git pull origin <base-branch>`.
-2. Check whether the next PR in the group can still merge cleanly: `gh pr view <number> --json mergeable`.
-3. If it has conflicts, rebase and push: `git -C <path> rebase <base-branch> && git -C <path> push --force-with-lease`, then merge.
-4. Repeat until all PRs in the group are merged.
+**After squash-merging each worktree branch in a parallel group:**
+1. Squash-merge: `git merge --squash <worktree-branch> && git commit -m "<task-filename>: <summary>"`.
+2. If there are merge conflicts, resolve them using context from both task files, then complete the commit.
+3. Repeat until all branches in the group are merged into the feature branch.
 
-**Before dispatching the next dependency group**, always `git pull` so the new worktrees are created from the fully updated base branch.
+**Before dispatching the next dependency group**, verify the feature branch has all previous group changes merged. The new worktrees will branch from the current state of the feature branch.
 
 **On failure or questions:** Act as the engineering manager. Use context from the planning phase to answer the sub-agent's question or unblock it. You have full context on:
 - Architecture decisions and their rationale
@@ -144,9 +156,37 @@ Compound commands that combine `cd` with `git` trigger a security approval ("bar
 2. You genuinely cannot determine the right answer from the codebase and review context.
 When escalating, explain what the sub-agent tried, what went wrong, and present options — don't just pass through a raw error.
 
-## Step 5: Update task files and execution summary
+## Step 6: Push feature branch and open pull request
 
-After all sub-agents complete, **update every task file and the epic to reflect the current state:**
+After all sub-agents have completed and their branches are merged into the feature branch:
+
+1. Push the feature branch: `git push origin epic/<EPIC_NAME>`.
+2. Create a single pull request against the target branch (recorded in Step 3):
+
+```bash
+gh pr create --base <target-branch> --title "<Epic title>" --body "$(cat <<'EOF'
+## Summary
+<1-3 sentence summary of the epic's goal>
+
+## Tasks completed
+- [x] <task-1> — <brief description>
+- [x] <task-2> — <brief description>
+- [!] <task-3> — <failure reason, if any>
+
+## Files modified
+- path/to/file.rb (tasks 1, 2)
+- path/to/other.js (task 3)
+
+## Test plan
+- [ ] <commands to run the test suite for changed files>
+- [ ] <any manual verification steps>
+EOF
+)"
+```
+
+## Step 7: Update task files and execution summary
+
+After the PR is created, **update every task file and the epic to reflect the current state:**
 
 **Update each task file's status field** (the `**Status:**` line in the header):
 - Completed: change `[ ]` to `[x]`. Check off acceptance criteria that were met. Then **move the task file to `_closed/`** (e.g., `tasks/<EPIC_NAME>/_closed/<task>.md`).
@@ -172,6 +212,9 @@ Then present the execution summary:
 EXECUTION COMPLETE
 ==================
 
+Feature branch: epic/<EPIC_NAME>
+Pull request:   <PR URL>
+
 Tasks completed: ___/___
 Tasks failed:    ___
 
@@ -194,10 +237,10 @@ Unresolved issues:
   - <any issues that need manual attention>
 ```
 
-**Commit and push the bookkeeping changes** in a single Bash call: `git add tasks/ && git commit -m 'chore: update task/epic status after execution' && git push origin <base-branch>`.
+**Commit and push the bookkeeping changes** on the feature branch: `git add tasks/ docs/ && git commit -m 'chore: update task/epic status after execution' && git push origin epic/<EPIC_NAME>`.
 
 Then use AskUserQuestion:
-> "All tasks are complete. What next?"
+> "All tasks are complete. The PR is ready for review. What next?"
 > **A) Run the test suite** — verify everything works together.
-> **B) Review changes** — I'll walk you through the merged diffs.
-> **C) Done** — all PRs are merged; no further action needed.
+> **B) Review changes** — I'll walk you through the combined diff.
+> **C) Done** — PR is open; no further action needed.

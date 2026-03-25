@@ -21,11 +21,9 @@ RULES FOR THIS TASK:
    a descriptive commit message prefixed with the task filename (e.g.,
    "task-03-auth-middleware: implement JWT validation and tests"). This is
    required — uncommitted changes in a worktree are lost when it is cleaned up.
-8. After committing, push your branch and create a pull request using
-   `gh pr create --base <BASE_BRANCH>` (your eng manager will tell you the
-   base branch in the prompt). Use the task title as the PR title and include
-   the task's goal and acceptance criteria in the PR body. Do NOT merge the
-   PR — your eng manager will review and decide whether to merge.
+8. Do NOT push your branch or create a pull request. Your eng manager will
+   squash-merge your worktree branch into the feature branch after reviewing
+   your work.
 9. **Avoid `cd <path> && git ...` compound commands** — they trigger a security
    approval prompt. Use `git -C <path>` instead (e.g., `git -C . add -A` or
    `git -C /path/to/worktree push`). For non-git commands that need a specific
