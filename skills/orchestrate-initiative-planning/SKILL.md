@@ -44,11 +44,12 @@ If `EnterWorktree` fails (e.g., already in a worktree), halt and ask the user ho
 ## Artifact Contract
 The orchestrated workflow should produce:
 
-1. Product artifacts in `vision/<INITIATIVE>/`
-   - `VISION.md`
+1. Product artifacts in `tasks/<EPIC_NAME>/`
+   - `VISION.md` (large initiatives only)
    - `PRD.<TOPIC>.md`
-2. Architecture artifacts in `docs/architecture/<INITIATIVE>/`
-3. Execution artifacts in `tasks/<EPIC_NAME>/`
+2. Top-level `VISION.md` update — high-level entry capturing the initiative's intent (large initiatives only)
+3. Architecture docs in `docs/architecture/` — organized by system or topic, not by initiative
+4. Execution artifacts in `tasks/<EPIC_NAME>/`
    - `EPIC.md`
    - task files
 
@@ -73,8 +74,9 @@ Its job:
 - review and improve the source PRD or planning doc
 - refine ICP, problem, value proposition, positioning, metrics, and launch narrative
 - create or update:
-  - `vision/<INITIATIVE>/VISION.md`
-  - `vision/<INITIATIVE>/PRD.<TOPIC>.md`
+  - `tasks/<EPIC_NAME>/VISION.md` (large initiatives)
+  - `tasks/<EPIC_NAME>/PRD.<TOPIC>.md`
+  - top-level `VISION.md` with a high-level entry for the initiative (large initiatives)
 
 Stage 1 is complete only when the required product artifacts exist and are updated.
 
@@ -82,12 +84,12 @@ Stage 1 is complete only when the required product artifacts exist and are updat
 After Stage 1 completes, launch a new sub-agent that applies `plan-cto-review`.
 
 Its inputs:
-- `vision/<INITIATIVE>/VISION.md`
-- relevant `vision/<INITIATIVE>/PRD.<TOPIC>.md`
+- `tasks/<EPIC_NAME>/VISION.md` (if exists)
+- relevant `tasks/<EPIC_NAME>/PRD.<TOPIC>.md`
 
 Its job:
 - review the initiative from a technical perspective
-- create or update architecture docs in `docs/architecture/<INITIATIVE>/`
+- update or create architecture docs in `docs/architecture/` (organized by system or topic, not by initiative)
 - create one or more EPICs in `tasks/<EPIC_NAME>/EPIC.md`
 
 When architecture drafting is needed, instruct the sub-agent to use `draft-technical-architecture`.
@@ -102,7 +104,7 @@ Each sub-agent applies `plan-eng-tasks`.
 **Scope is already locked.** The orchestrator confirmed scope in Stages 1-2. Instruct each sub-agent to skip Step 0 (Scope Challenge) and begin directly at the readiness sections. Include this directive in the sub-agent prompt: `SKIP_STEP_0=true — scope was locked by the orchestrator during initiative planning. Do not re-challenge scope.`
 
 Each sub-agent consumes:
-- the relevant docs in `docs/architecture/<INITIATIVE>/`
+- the relevant docs in `docs/architecture/`
 - the relevant `tasks/<EPIC_NAME>/EPIC.md`
 
 Its job:
@@ -160,7 +162,7 @@ Before starting each stage:
 ### Traceability
 Maintain this chain:
 
-- Vision claim -> PRD requirement -> Architecture decision -> EPIC -> task file
+- PRD requirement -> Architecture decision -> EPIC -> task file
 
 Call out gaps when:
 - an EPIC has no PRD anchor
@@ -184,8 +186,9 @@ STAGE 1: CEO PRODUCT REVIEW
 1. Launch a sub-agent and have it apply `/plan-ceo-review` to review and improve
    <SOURCE_DOC>.
 2. Produce:
-   - `vision/<INITIATIVE>/VISION.md`
-   - `vision/<INITIATIVE>/PRD.<TOPIC>.md`
+   - `tasks/<EPIC_NAME>/VISION.md` (large initiatives)
+   - `tasks/<EPIC_NAME>/PRD.<TOPIC>.md`
+   - Update top-level `VISION.md` with high-level intent (large initiatives)
 3. Answer the sub-agent's questions when possible.
 4. Only escalate to me when genuinely blocked.
 5. Do not move to Stage 2 until the product artifacts are updated.
@@ -193,10 +196,10 @@ STAGE 1: CEO PRODUCT REVIEW
 STAGE 2: CTO TECHNICAL REVIEW
 1. Launch a new sub-agent and have it apply `/plan-cto-review`.
 2. Inputs:
-   - `vision/<INITIATIVE>/VISION.md`
-   - `vision/<INITIATIVE>/PRD.<TOPIC>.md`
+   - `tasks/<EPIC_NAME>/VISION.md` (if exists)
+   - `tasks/<EPIC_NAME>/PRD.<TOPIC>.md`
 3. Produce:
-   - docs in `docs/architecture/<INITIATIVE>/`
+   - updated or new docs in `docs/architecture/` (by system/topic, not initiative)
    - one or more EPICs in `tasks/<EPIC_NAME>/EPIC.md`
 4. Use `/draft-technical-architecture` when helpful.
 5. Answer the sub-agent's questions when possible.
@@ -207,7 +210,7 @@ STAGE 3: ENGINEERING TASK PLANNING
 2. Have each sub-agent apply `/plan-eng-tasks`.
 3. Tell each sub-agent: `SKIP_STEP_0=true — scope was locked by the orchestrator. Do not re-challenge scope.`
 4. Inputs:
-   - `docs/architecture/<INITIATIVE>/`
+   - relevant docs in `docs/architecture/`
    - `tasks/<EPIC_NAME>/EPIC.md`
 5. Produce:
    - updated EPICs
@@ -226,9 +229,9 @@ STAGE 4: PUSH AND OPEN PR
 
 ORCHESTRATION RULES
 - Maintain path discipline:
-  - `vision/<INITIATIVE>/...`
-  - `docs/architecture/<INITIATIVE>/...`
-  - `tasks/<EPIC_NAME>/...`
+  - Product artifacts in `tasks/<EPIC_NAME>/` (VISION.md, PRDs)
+  - Architecture docs in `docs/architecture/` (by system/topic)
+  - Execution artifacts in `tasks/<EPIC_NAME>/` (EPIC, task files)
 - Preserve traceability from product -> architecture -> execution.
 - Answer sub-agent questions directly when possible.
 - Escalate only when genuinely blocked.

@@ -13,7 +13,6 @@ allowed-tools:
   - Bash
   - AskUserQuestion
 ---
-<!-- AUTO-GENERATED from SKILL.md.tmpl — keep files aligned -->
 
 # CTO Technical Plan Review Mode
 
@@ -22,10 +21,20 @@ Use this skill when the plan is already defined at the product level and needs r
 
 ## Artifact Contract
 This skill's primary artifacts are:
-1. **Architecture diagrams** stored in `docs/architecture/<INITIATIVE>` that capture boundaries, dependencies, and critical flows.
+1. **Architecture documentation** — update existing docs or create new ones, depending on scope (see Architecture Doc Policy below).
 2. **EPIC document(s)** stored in `tasks/<EPIC_NAME>` that define implementation slices, sequencing, and constraints at an execution-planning level.
 
 These artifacts are inputs to `plan-eng-tasks`.
+
+### Architecture Doc Policy
+Architecture docs in `docs/architecture/` are a living set of documents that explain how the system is built. They are organized by system or topic, not by initiative or epic.
+
+Before creating architecture artifacts, read the existing docs in `docs/architecture/` and assess whether the change should be integrated into an existing document or warrants a new one:
+
+- **Update existing docs** when the change extends an existing system (e.g., a new pipeline node, a new adapter, a new handler). Find the doc that describes that system and add the new component to its diagrams, flow descriptions, and component list.
+- **Create a new doc** at `docs/architecture/<SYSTEM_OR_TOPIC>.md` only when the change introduces a genuinely new subsystem, a new cross-cutting concern, or a new architectural boundary that doesn't fit naturally into any existing doc. Name it after the system or topic it describes, not the initiative that created it.
+
+Rule of thumb: if the feature is described in terms of an existing system ("add X to the Y pipeline"), it belongs in Y's architecture doc, not its own.
 
 ## AskUserQuestion Format
 For each AskUserQuestion:
@@ -164,7 +173,7 @@ Return only sections that have findings. Omit empty sections entirely — do not
 3. **Failure Modes Registry** - codepath, failure, rescued?, tested?, user sees?, logged? (Omit if no unrescued/untested failures.)
 4. **Top Gaps** - max 7 critical/important gaps with concrete fixes. (Omit if no gaps.)
 5. **Implementation Readiness Verdict** - what must be true before coding starts. (Always required.)
-6. **Architecture Diagrams** - include/update diagrams where relevant. (Omit if change does not affect architecture.)
+6. **Architecture Documentation** - update existing docs or create new ones per the Architecture Doc Policy. Prefer updating existing docs for features that extend an existing system. (Omit if change does not affect architecture.)
 7. **EPIC Draft(s)** - create EPIC documents at `tasks/<EPIC_NAME>/EPIC.md`. (Omit for small changes that fit in a single task.)
 
 ## Interaction Policy

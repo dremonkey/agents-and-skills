@@ -47,7 +47,7 @@ Do not duplicate that full review. Only re-open a technical topic if:
 This skill's primary artifacts are:
 1. **Modified EPIC(s)** - update existing EPIC documents in `tasks/<EPIC_NAME>` from CTO review to reflect final execution sequencing and decisions.
 2. **Clearly defined task files** - concrete, dependency-aware implementation tasks derived from EPIC scope.
-3. **Updated architecture docs (when needed)** - capture implementation details discovered during execution that materially change or clarify architecture in `docs/architecture/<INITIATIVE>`.
+3. **Updated architecture docs (when needed)** - capture implementation details discovered during execution planning that materially change or clarify architecture in `docs/architecture/`. Architecture docs are organized by system or topic, not by initiative.
 
 ## Priority hierarchy
 If you are running low on context or the user asks you to compress: Step 0 > dependency/task decomposition > approval-ready execution plan > everything else. Never skip Step 0.

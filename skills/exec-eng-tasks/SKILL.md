@@ -27,7 +27,7 @@ This skill expects artifacts already produced by `plan-eng-tasks`:
 
 - **Epic file:** `tasks/<EPIC_NAME>/EPIC.md` — source of truth for goal, architecture overview, task list, key decisions, and anti-goals.
 - **Task files:** `tasks/<EPIC_NAME>/<task>.md` — one per implementable unit, following the task template (title, status, dependencies, goal, context, implementation steps, acceptance criteria).
-- **Architecture docs (optional):** `docs/architecture/<INITIATIVE>/` — referenced by tasks when relevant.
+- **Architecture docs (optional):** relevant docs in `docs/architecture/` — organized by system or topic, referenced by tasks when relevant.
 
 If these artifacts do not exist, stop and tell the user to run `plan-eng-tasks` first.
 
@@ -200,8 +200,8 @@ After the PR is created, **update every task file and the epic to reflect the cu
 - For tasks moved to `_closed/`, keep their entry in the epic's task list (for historical reference) but mark them with their final status.
 
 **Update architecture docs when implementation changed the shape of the design.**
-- If implementation discoveries changed boundaries, data flow, rollout behavior, or key tradeoffs, update the relevant docs in `docs/architecture/<INITIATIVE>` in the same cycle.
-- Keep diagrams in `docs/architecture/<INITIATIVE>` consistent with the final implementation and EPIC decisions.
+- If implementation discoveries changed boundaries, data flow, rollout behavior, or key tradeoffs, update the relevant docs in `docs/architecture/` in the same cycle.
+- Keep diagrams in `docs/architecture/` consistent with the final implementation and EPIC decisions.
 - If no architecture changes were discovered, state that explicitly in the execution summary.
 
 **Reading existing epics:** When scanning an epic's directory to understand current work, **skip the `_closed/` subdirectory entirely.** Only look inside `_closed/` if the user explicitly asks to review closed or cancelled tasks.

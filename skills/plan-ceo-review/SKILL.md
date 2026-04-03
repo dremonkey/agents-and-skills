@@ -21,9 +21,18 @@ Use this skill to ensure a product or feature plan is strategically correct befo
 This is a product-definition review, not an engineering deep-dive.
 
 ## Artifact Contract
-This skill must produce concrete product artifacts:
-1. **Vision doc** at `vision/<INITIATIVE>/VISION.md` (ICP, problem, value prop, positioning, launch narrative, non-goals).
-2. **PRD doc(s)** in the same folder at `vision/<INITIATIVE>/PRD.<TOPIC>.md` (scope, requirements, user flows, acceptance criteria, success metrics).
+Before creating artifacts, assess the size and strategic weight of the initiative:
+
+### Large initiatives (new subsystem, new user-facing capability, multi-EPIC effort)
+1. **Vision doc** at `tasks/<EPIC_NAME>/VISION.md` (ICP, problem, value prop, positioning, launch narrative, non-goals).
+2. **PRD doc(s)** at `tasks/<EPIC_NAME>/PRD.<TOPIC>.md` (scope, requirements, user flows, acceptance criteria, success metrics).
+3. **Update top-level `VISION.md`** — add or revise a short entry capturing the initiative's intent. Keep it high-level: what capability is being added and why, not implementation details. This file is the living record of product direction.
+
+### Small-to-medium features (new component in existing system, single-EPIC scope, optimization)
+1. **PRD** at `tasks/<EPIC_NAME>/PRD.md` (scope, requirements, acceptance criteria, success metrics).
+2. No per-epic vision doc — the feature is part of an existing system's vision, not its own.
+
+Rule of thumb: if the feature is described in terms of an existing system ("add X to Y", "optimize Z pipeline"), it's small-to-medium. If it introduces a new user-facing capability or a new architectural boundary, it's large.
 
 These artifacts are inputs to `plan-cto-review` and `plan-eng-tasks`.
 
@@ -180,8 +189,9 @@ Always output this structure:
    - Launch headline sentence
 
 6. **Artifact Outputs**
-   - Create or update `vision/<INITIATIVE>/VISION.md`
-   - Create or update one or more PRDs at `vision/<INITIATIVE>/PRD.<TOPIC>.md`
+   - For large initiatives: create or update `tasks/<EPIC_NAME>/VISION.md` and PRDs at `tasks/<EPIC_NAME>/PRD.<TOPIC>.md`
+   - For large initiatives: update top-level `VISION.md` with a high-level entry for the initiative (intent and why, not details)
+   - For small-to-medium features: create PRD at `tasks/<EPIC_NAME>/PRD.md` (no vision doc)
    - Ensure all artifact files reflect the final decisions from this review pass
 
 ## Anti-Patterns to Reject

@@ -27,3 +27,4 @@ skills/
 - Keep runtime `SKILL.md` files behavior-focused; do not include meta notes about cross-platform compatibility in the skill body.
 - Use simple YAML frontmatter (`name`, `description`, optional `version`) for portability.
 - Avoid platform-specific invocation syntax in skill instructions; reference related skills by name.
+- When a skill has both `SKILL.md` and `SKILL.md.tmpl`, the two files must stay in sync. `SKILL.md` is the active prompt; `SKILL.md.tmpl` is the template used to generate instances for sub-agents. When editing one, update the other to match.
