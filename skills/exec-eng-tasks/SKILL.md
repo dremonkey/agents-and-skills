@@ -111,7 +111,8 @@ For each approved task (respecting dependency order), spawn a sub-agent using th
 * **Prompt construction:** Read the task file and construct a prompt that includes:
   1. The full task file content (Goal, Context, Implementation sections, Acceptance criteria).
   2. Any relevant context from readiness (constraints, decisions, engineering preferences, ASCII diagrams).
-  3. The sub-agent behavioral rules below.
+  3. **Prior task results (for groups after the first):** A brief summary of concrete changes made by earlier groups that this sub-agent should know about. Include: package/directory renames, interface changes, import path changes, new files or modules introduced. This prevents sub-agents from re-applying changes that are already on the feature branch and reduces merge conflicts.
+  4. The sub-agent behavioral rules below.
 * **Parallelism:** Tasks with no unresolved dependencies SHOULD run in parallel. Use `run_in_background: true` for all tasks in a parallel group except the last one, so you can monitor completion. When a group finishes, dispatch the next group.
 * **Isolation:** Use `isolation: "worktree"` so each sub-agent works on an isolated copy and can't conflict with others.
 
@@ -143,7 +144,18 @@ Compound commands that combine `cd` with `git` trigger a security approval ("bar
 2. If there are merge conflicts, resolve them using context from both task files, then complete the commit.
 3. Repeat until all branches in the group are merged into the feature branch.
 
-**Before dispatching the next dependency group**, verify the feature branch has all previous group changes merged. The new worktrees will branch from the current state of the feature branch.
+**Before dispatching the next dependency group:**
+1. Verify the feature branch has all previous group changes merged.
+2. **Push the feature branch** so new worktrees branch from the updated state: `git push origin epic/<EPIC_NAME>`.
+3. Note what changed in the completed group (renames, new files, interface changes) — you'll include this in the next group's sub-agent prompts (see Step 4, item 3).
+
+This push is critical — `isolation: "worktree"` branches from the repo's current state. Without pushing after each group's merges, new worktrees will miss prior group changes, causing sub-agents to redo work and create merge conflicts.
+
+**Resolving merge conflicts:** When squash-merging produces conflicts, use these patterns:
+- **Rename/rename conflicts** (both sides moved the same file): Pick the target path from the task that owns the rename. Discard the other side's path.
+- **Import path divergence** (multiple sub-agents updated the same import): Use the import path that matches the final package/directory name established by the earliest task in the dependency chain.
+- **Overlapping edits to the same file:** Use context from both task files to combine changes. Prefer the version from the task that "owns" the area being edited per the dependency graph.
+- If a conflict is entirely mechanical (path remapping, import fixups), resolve it without escalating. Only escalate semantic conflicts where intent is ambiguous.
 
 **On failure or questions:** Act as the engineering manager. Use context from the planning phase to answer the sub-agent's question or unblock it. You have full context on:
 - Architecture decisions and their rationale
