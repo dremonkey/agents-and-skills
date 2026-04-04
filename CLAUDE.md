@@ -28,3 +28,7 @@ skills/
 - Use simple YAML frontmatter (`name`, `description`, optional `version`) for portability.
 - Avoid platform-specific invocation syntax in skill instructions; reference related skills by name.
 - When a skill has both `SKILL.md` and `SKILL.md.tmpl`, the two files must stay in sync. `SKILL.md` is the active prompt; `SKILL.md.tmpl` is the template used to generate instances for sub-agents. When editing one, update the other to match.
+
+## Task handling
+
+- Tasks in `tasks/_closed` are completed. Ignore files in `tasks/_closed` unless the goal is to gather context on a closed task. 
