@@ -113,7 +113,8 @@ For each approved task (respecting dependency order), spawn a sub-agent using th
   2. Any relevant context from readiness (constraints, decisions, engineering preferences, ASCII diagrams).
   3. **Prior task results (for groups after the first):** A brief summary of concrete changes made by earlier groups that this sub-agent should know about. Include: package/directory renames, interface changes, import path changes, new files or modules introduced. This prevents sub-agents from re-applying changes that are already on the feature branch and reduces merge conflicts.
   4. The sub-agent behavioral rules below.
-* **Parallelism:** Tasks with no unresolved dependencies SHOULD run in parallel. Use `run_in_background: true` for all tasks in a parallel group except the last one, so you can monitor completion. When a group finishes, dispatch the next group.
+* **Parallelism:** Tasks with no unresolved dependencies SHOULD run in parallel. When a group finishes, dispatch the next group.
+* **Always run in background:** Use `run_in_background: true` for ALL sub-agent dispatches — even single tasks and the last task in a group. This keeps the conversation responsive so the user can interact with you while agents work. You will be notified when each agent completes.
 * **Isolation:** Use `isolation: "worktree"` so each sub-agent works on an isolated copy and can't conflict with others.
 
 **Sub-agent behavioral rules:** Read `skills/shared/SUB_AGENT_RULES.md` and include its contents verbatim in every sub-agent prompt.
