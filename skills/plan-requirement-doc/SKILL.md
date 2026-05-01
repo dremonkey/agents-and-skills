@@ -1,5 +1,5 @@
 ---
-name: plan-ceo-review
+name: plan-requirement-doc
 version: 1.3.0
 model: opus
 description: |
@@ -34,7 +34,7 @@ Before creating artifacts, assess the size and strategic weight of the initiativ
 
 Rule of thumb: if the feature is described in terms of an existing system ("add X to Y", "optimize Z pipeline"), it's small-to-medium. If it introduces a new user-facing capability or a new architectural boundary, it's large.
 
-These artifacts are inputs to `plan-cto-review` and `plan-eng-tasks`.
+These artifacts are inputs to `plan-tech-spec` and `plan-eng-tasks`.
 
 ## Core Principle
 A plan is only ready when all of these are clear and coherent:

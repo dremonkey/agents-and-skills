@@ -2,8 +2,8 @@
 name: orchestrate-initiative-planning
 version: 1.0.0
 description: |
-  Orchestrates a multi-stage planning workflow across plan-ceo-review,
-  plan-cto-review, draft-technical-architecture, and plan-eng-tasks. Use when
+  Orchestrates a multi-stage planning workflow across plan-requirement-doc,
+  plan-tech-spec, draft-technical-architecture, and plan-eng-tasks. Use when
   turning a PRD or initiative into vision docs, architecture docs, EPICs, and
   task files without implementing code. After planning, use exec-eng-tasks to
   dispatch implementation.
@@ -68,7 +68,7 @@ It does not dispatch implementation sub-agents or write code. If the user wants 
 ## Stage Workflow
 
 ### Stage 1: CEO Product Review
-Launch a sub-agent that applies `plan-ceo-review`.
+Launch a sub-agent that applies `plan-requirement-doc`.
 
 Its job:
 - review and improve the source PRD or planning doc
@@ -81,7 +81,7 @@ Its job:
 Stage 1 is complete only when the required product artifacts exist and are updated.
 
 ### Stage 2: CTO Technical Review
-After Stage 1 completes, launch a new sub-agent that applies `plan-cto-review`.
+After Stage 1 completes, launch a new sub-agent that applies `plan-tech-spec`.
 
 Its inputs:
 - `tasks/<EPIC_NAME>/VISION.md` (if exists)
@@ -183,7 +183,7 @@ STAGE 0: WORKTREE SETUP
 3. If worktree creation fails, stop and ask me how to proceed.
 
 STAGE 1: CEO PRODUCT REVIEW
-1. Launch a sub-agent and have it apply `/plan-ceo-review` to review and improve
+1. Launch a sub-agent and have it apply `/plan-requirement-doc` to review and improve
    <SOURCE_DOC>.
 2. Produce:
    - `tasks/<EPIC_NAME>/VISION.md` (large initiatives)
@@ -194,7 +194,7 @@ STAGE 1: CEO PRODUCT REVIEW
 5. Do not move to Stage 2 until the product artifacts are updated.
 
 STAGE 2: CTO TECHNICAL REVIEW
-1. Launch a new sub-agent and have it apply `/plan-cto-review`.
+1. Launch a new sub-agent and have it apply `/plan-tech-spec`.
 2. Inputs:
    - `tasks/<EPIC_NAME>/VISION.md` (if exists)
    - `tasks/<EPIC_NAME>/PRD.<TOPIC>.md`

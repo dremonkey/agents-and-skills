@@ -1,5 +1,5 @@
 ---
-name: plan-cto-review
+name: plan-tech-spec
 version: 1.3.0
 model: opus
 description: |

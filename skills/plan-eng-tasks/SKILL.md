@@ -4,7 +4,7 @@ version: 3.0.0
 model: opus
 description: |
   Eng manager-mode execution planning. Converts approved scope into a
-  dependency-aware task plan and generates task files. Uses plan-cto-review
+  dependency-aware task plan and generates task files. Uses plan-tech-spec
   outputs when available instead of re-running deep technical diligence.
   Planning only — use exec-eng-tasks to dispatch implementation.
 allowed-tools:
@@ -26,10 +26,10 @@ This skill prepares an approved plan for execution: scope challenge, resolve dec
 
 ## EXECUTION READINESS
 
-Prepare an approved plan for execution before making any code changes. Focus on dependency-safe task decomposition, owner clarity, and execution sequencing. Do not re-run deep architecture/security/performance diligence if `plan-cto-review` outputs already exist.
+Prepare an approved plan for execution before making any code changes. Focus on dependency-safe task decomposition, owner clarity, and execution sequencing. Do not re-run deep architecture/security/performance diligence if `plan-tech-spec` outputs already exist.
 
-## Relationship to `plan-cto-review`
-`plan-cto-review` is the technical quality gate. This skill is the execution manager.
+## Relationship to `plan-tech-spec`
+`plan-tech-spec` is the technical quality gate. This skill is the execution manager.
 
 When CTO outputs exist, ingest and use them as inputs:
 1. Decision Summary
