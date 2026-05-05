@@ -96,9 +96,10 @@ If the user chooses B, use AskUserQuestion to let them select which tasks to exe
 
 Before dispatching any work, create a single feature branch that will collect all task results:
 
-1. Record the current branch as the **target branch** (usually `main`): `git branch --show-current`.
-2. Create and check out the feature branch: `git checkout -b epic/<EPIC_NAME>`.
-3. Push the branch so it exists on the remote: `git push -u origin epic/<EPIC_NAME>`.
+1. Record the current branch as the **target branch** (usually `main`): `git branch --show-current`. Save it as `TARGET_BRANCH`.
+2. Create and check out the feature branch: `git checkout -b epic/<EPIC_NAME>`. Save its name as `FEATURE_BRANCH`.
+3. Push the branch so it exists on the remote: `git push -u origin <FEATURE_BRANCH>`.
+4. **Record the feature-branch HEAD SHA** as `BASE_SHA`. You will refresh `BASE_SHA` after every successful merge (Step 5). The current value goes into every sub-agent prompt's pre-flight contract.
 
 All sub-agent worktrees will branch off this feature branch. All completed work merges back into it.
 
@@ -110,8 +111,15 @@ For each approved task (respecting dependency order), spawn a sub-agent using th
 * **Model:** `sonnet` — use the `model` parameter on the Agent tool.
 * **Prompt construction:** Read the task file and construct a prompt that includes:
   1. The full task file content (Goal, Context, Implementation sections, Acceptance criteria).
-  2. Any relevant context from readiness (constraints, decisions, engineering preferences, ASCII diagrams).
-  3. **Prior task results (for groups after the first):** A brief summary of concrete changes made by earlier groups that this sub-agent should know about. Include: package/directory renames, interface changes, import path changes, new files or modules introduced. This prevents sub-agents from re-applying changes that are already on the feature branch and reduces merge conflicts.
+  2. Any relevant context from readiness (constraints, decisions, engineering preferences, diagrams).
+  3. **Pre-flight contract** — every sub-agent prompt MUST include the following block. It exists to defend against stale or empty worktree bases, which sub-agents would otherwise mask by silently re-implementing dependencies from scratch.
+     - **Expected base commit:** the current `BASE_SHA` (refreshed after every merge in Step 5).
+     - **First action instruction:** "Your first action is to run `git log -1` (or the equivalent) and confirm your worktree is at `<BASE_SHA>`. If the SHA does not match, STOP and report a stale-base error — do not proceed and do not implement anything from scratch."
+     - **Inventory block** — generated from the actual repo state at `BASE_SHA`:
+       - List file/directory paths that prior tasks have committed and that this task is expected to depend on.
+       - For each, name the module/component and a one-line description of its role. Point to the originating task file for the full contract; do not duplicate the contract.
+       - Cover the dependency graph for this task: anything the task's `Depends on` chain produced.
+     - **Hard rule for the sub-agent:** "If a file or module listed in the inventory is missing from your worktree, STOP and report it — do NOT reimplement listed dependencies from scratch under any circumstances. The inventory is the contract; an absent file means the worktree is stale, not that the file should be created."
   4. The sub-agent behavioral rules below.
 * **Parallelism:** Tasks with no unresolved dependencies SHOULD run in parallel. When a group finishes, dispatch the next group.
 * **Always run in background:** Use `run_in_background: true` for ALL sub-agent dispatches — even single tasks and the last task in a group. This keeps the conversation responsive so the user can interact with you while agents work. You will be notified when each agent completes.
@@ -140,17 +148,16 @@ Compound commands that combine `cd` with `git` trigger a security approval ("bar
 - **Chain related `git -C` commands** with `&&` to reduce the total number of Bash calls.
 - For non-git commands that must run in a specific directory (e.g. test runners), use a subshell: `(cd <path> && bun test ...)`.
 
-**After squash-merging each worktree branch in a parallel group:**
+**For each worktree branch you merge:**
 1. Squash-merge: `git merge --squash <worktree-branch> && git commit -m "<task-filename>: <summary>"`.
 2. If there are merge conflicts, resolve them using context from both task files, then complete the commit.
-3. Repeat until all branches in the group are merged into the feature branch.
+3. **Push immediately after the merge commit:** `git push origin <FEATURE_BRANCH>`. Do not batch pushes to the end of a group — push after every merge. The next sub-agent's worktree forks from the feature branch's tip; any merge that hasn't been pushed (or that the next worktree's base ref doesn't see) is invisible to that agent. Skipping pushes here causes downstream agents to redo work and produce avoidable merge conflicts. The pre-flight contract (Step 4, item 3) is the second line of defense if a push is somehow missed or the worktree base ends up stale anyway.
 
 **Before dispatching the next dependency group:**
-1. Verify the feature branch has all previous group changes merged.
-2. **Push the feature branch** so new worktrees branch from the updated state: `git push origin epic/<EPIC_NAME>`.
-3. Note what changed in the completed group (renames, new files, interface changes) — you'll include this in the next group's sub-agent prompts (see Step 4, item 3).
-
-This push is critical — `isolation: "worktree"` branches from the repo's current state. Without pushing after each group's merges, new worktrees will miss prior group changes, causing sub-agents to redo work and create merge conflicts.
+1. Verify every merge from the previous group is on `origin/<FEATURE_BRANCH>`.
+2. **Parent-HEAD guardrail.** Assert the parent repo's current branch is still `FEATURE_BRANCH` (sub-agents have occasionally been observed switching the parent's HEAD onto a custom branch). If it isn't, switch back before doing anything else and investigate what caused the drift.
+3. **Refresh `BASE_SHA`** to the new feature-branch HEAD. Every subsequent dispatch uses the new value in its pre-flight contract.
+4. Note what changed in the completed group (renames, new files, interface changes) — this informs the inventory block in the next group's prompts (see Step 4, item 3).
 
 **Resolving merge conflicts:** When squash-merging produces conflicts, use these patterns:
 - **Rename/rename conflicts** (both sides moved the same file): Pick the target path from the task that owns the rename. Discard the other side's path.
