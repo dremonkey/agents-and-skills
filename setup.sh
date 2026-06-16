@@ -15,6 +15,24 @@ mkdir -p "$TARGET_DIR"
 echo "Linking skills from: $SOURCE_DIR"
 echo "Linking skills into: $TARGET_DIR"
 
+# Sweep orphaned symlinks: links in TARGET_DIR that point into this repo's
+# skills/ but whose target no longer exists (skill deleted or renamed). Only
+# touch links pointing into SOURCE_DIR so user-created links are left alone.
+for target_link in "$TARGET_DIR"/*; do
+  [[ -L "$target_link" ]] || continue
+
+  existing_target="$(readlink "$target_link")"
+  case "$existing_target" in
+    "$SOURCE_DIR"/*) ;;
+    *) continue ;;
+  esac
+
+  if [[ ! -e "$existing_target" ]]; then
+    rm "$target_link"
+    echo "Removed orphaned link: $(basename "$target_link")"
+  fi
+done
+
 for skill_dir in "$SOURCE_DIR"/*; do
   [[ -d "$skill_dir" ]] || continue
 
