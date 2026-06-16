@@ -11,7 +11,7 @@ A Claude Code plugin packaging agent definitions and skill prompts.
 | `plan-tech-spec` | CTO technical reviewer | Performs deep technical readiness review across architecture, risks, security, testing, and rollout. |
 | `orchestrate-initiative-planning` | Planning workflow orchestrator | Coordinates CEO review, CTO review, and engineering task planning from PRD through EPICs and task files without implementation. |
 | `draft-technical-architecture` | Technical architect | Produces architecture drafts with clear system design, tradeoffs, and implementation direction. |
-| `review-plan` | Plan PR reviewer (GitHub) | Reviews planning PRs (EPICs, PRDs, architecture docs) and publishes a batched line-tied review via `gh`. Bails on code-heavy diffs. |
+| `review-mr` | MR/PR reviewer (GitLab + GitHub) | Reviews a GitLab MR (`glab`) or GitHub PR (`gh`) — auto-detects the platform via a provider file — in one of three triaged modes: PLAN (planning prose), IMPL-FIRST (first-pass code review), or FOLLOWUP (delta re-review). Publishes a top-level + line-tied review. |
 
 ## Structure
 

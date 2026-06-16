@@ -33,7 +33,7 @@ If these artifacts do not exist, stop and tell the user to run `plan-eng-tasks` 
 
 ## Engineering preferences (included in sub-agent prompts)
 
-Read `skills/shared/ENGINEERING_PREFERENCES.md` and include its contents in every sub-agent prompt.
+Read `skills/shared/engineering-preferences.md` and include its contents in every sub-agent prompt.
 
 ## Status markers
 
@@ -125,7 +125,7 @@ For each approved task (respecting dependency order), spawn a sub-agent using th
 * **Always run in background:** Use `run_in_background: true` for ALL sub-agent dispatches — even single tasks and the last task in a group. This keeps the conversation responsive so the user can interact with you while agents work. You will be notified when each agent completes.
 * **Isolation:** Use `isolation: "worktree"` so each sub-agent works on an isolated copy and can't conflict with others.
 
-**Sub-agent behavioral rules:** Read `skills/shared/SUB_AGENT_RULES.md` and include its contents verbatim in every sub-agent prompt.
+**Sub-agent behavioral rules:** Read `skills/shared/sub-agent-rules.md` and include its contents verbatim in every sub-agent prompt.
 
 ## Step 5: Monitor and merge into feature branch
 

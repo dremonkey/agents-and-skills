@@ -1,6 +1,6 @@
 ---
 name: plan-tech-spec
-version: 1.3.0
+version: 1.4.0
 model: opus
 description: |
   CTO-level technical plan review for implementation readiness and risk control.
@@ -55,6 +55,13 @@ Choose one mode and stick to it:
 3. Map happy path plus shadow paths (nil, empty, upstream failure).
 4. Treat observability and rollback as first-class scope.
 5. Name and quantify technical risks before execution.
+
+## Gap Discovery Rule
+During review, record every gap you find — including ones you are uncertain about or
+consider low-severity — with an estimated severity and a confidence level. Do not
+filter for importance while reviewing; ranking and filtering happen only when
+assembling Required Outputs. It is better to surface a finding that gets ranked out
+of the top list than to silently drop one.
 
 ## Pre-Review System Audit
 Run:
@@ -171,7 +178,7 @@ Return only sections that have findings. Omit empty sections entirely — do not
 1. **Decision Summary** - Proceed / Revise / Stop, with confidence. (Always required.)
 2. **Technical Risk Register** - top risks, severity, owner recommendation. (Omit if no risks.)
 3. **Failure Modes Registry** - codepath, failure, rescued?, tested?, user sees?, logged? (Omit if no unrescued/untested failures.)
-4. **Top Gaps** - max 7 critical/important gaps with concrete fixes. (Omit if no gaps.)
+4. **Top Gaps** - the 7 highest-ranked gaps with concrete fixes, selected after discovery per the Gap Discovery Rule. List any remaining lower-ranked gaps as one-liners beneath the top list. (Omit if no gaps.)
 5. **Implementation Readiness Verdict** - what must be true before coding starts. (Always required.)
 6. **Architecture Documentation** - update existing docs or create new ones per the Architecture Doc Policy. Prefer updating existing docs for features that extend an existing system. (Omit if change does not affect architecture.)
 7. **EPIC Draft(s)** - create EPIC documents at `tasks/<EPIC_NAME>/EPIC.md`. (Omit for small changes that fit in a single task.)
@@ -180,5 +187,8 @@ Return only sections that have findings. Omit empty sections entirely — do not
 - Avoid unnecessary back-and-forth; batch related decisions.
 - Ask at most 3 high-value questions per pass.
 - If a fix is obvious and low-risk, recommend directly.
+- For minor judgment calls (naming, doc placement, which of two equivalent fixes),
+  decide and note the decision rather than asking — reserve the question budget for
+  genuine scope, architecture, or risk-acceptance decisions.
 - If 2+ critical gaps remain unresolved, recommend **Revise**.
 - If architecture or security posture is fundamentally unsafe, recommend **Stop**.

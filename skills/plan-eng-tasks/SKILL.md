@@ -1,6 +1,6 @@
 ---
 name: plan-eng-tasks
-version: 3.0.0
+version: 3.1.0
 model: opus
 description: |
   Eng manager-mode execution planning. Converts approved scope into a
@@ -14,7 +14,7 @@ allowed-tools:
   - Grep
   - Glob
   - Bash
-  - Task
+  - Agent
   - AskUserQuestion
 ---
 
@@ -49,11 +49,19 @@ This skill's primary artifacts are:
 2. **Clearly defined task files** - concrete, dependency-aware implementation tasks derived from EPIC scope.
 3. **Updated architecture docs (when needed)** - capture implementation details discovered during execution planning that materially change or clarify architecture in `docs/architecture/`. Architecture docs are organized by system or topic, not by initiative.
 
+## Sub-agent usage during planning
+Use the Agent tool to fan out read-only exploration when decomposition requires
+surveying many files or subsystems independently — e.g., one explorer per provider
+package, or per touched subsystem, to confirm what already exists and where task
+boundaries should fall. Spawn these in parallel in a single turn. Do NOT spawn a
+sub-agent for work you can complete directly with a single Read or Grep.
+Implementation dispatch stays with `exec-eng-tasks` — never implement from here.
+
 ## Priority hierarchy
 If you are running low on context or the user asks you to compress: Step 0 > dependency/task decomposition > approval-ready execution plan > everything else. Never skip Step 0.
 
 ## My engineering preferences (use these to guide your recommendations):
-Read `skills/shared/ENGINEERING_PREFERENCES.md` for the full list. Use these preferences to guide all recommendations and map your reasoning to specific preferences when explaining WHY.
+Read `skills/shared/engineering-preferences.md` for the full list. Use these preferences to guide all recommendations and map your reasoning to specific preferences when explaining WHY.
 
 ## Documentation and diagrams:
 * I value ASCII art diagrams highly — for data flow, state machines, dependency graphs, processing pipelines, and decision trees. Use them liberally in plans and design docs.
@@ -123,6 +131,7 @@ For every specific issue (bug, smell, design concern, or risk):
 * **Map the reasoning to my engineering preferences above.** One sentence connecting your recommendation to a specific preference (DRY, explicit > clever, minimal diff, etc.).
 * **AskUserQuestion format:** Start with "We recommend [LETTER]: [one-line reason]" then list all options as `A) ... B) ... C) ...`. Label with issue NUMBER + option LETTER (e.g., "3A", "3B").
 * **Escape hatch:** If a section has no issues, say so and move on. If an issue has an obvious fix with no real alternatives, state what you'll do and move on — don't waste a question on it. Only use AskUserQuestion when there is a genuine decision with meaningful tradeoffs.
+* **Minor choices are not issues.** For task naming, file naming, ordering among dependency-equivalent tasks, or template phrasing, pick a reasonable option and note it in the output — never spend an AskUserQuestion slot on it. Questions are for scope, sequencing risk, and decisions the user would want to overrule.
 
 ## Required outputs
 
@@ -139,7 +148,7 @@ After all readiness sections are complete, break the approved plan into discrete
 
 **Closed tasks directory:** Tasks that are completely done (`[x]`) or cancelled should be moved into a `_closed/` subdirectory within the epic (e.g., `tasks/<EPIC_NAME>/_closed/<task>.md`). This keeps the epic directory clean — only active/pending work is visible at a glance. When reviewing or listing tasks, **ignore everything in `_closed/`** unless the user explicitly asks to check closed tasks.
 
-**Task file format:** Use the template in `TASK_TEMPLATE.md` (same directory as this skill file). Read it before generating task files. Key points:
+**Task file format:** Use the template in `task-template.md` (same directory as this skill file). Read it before generating task files. Key points:
 - Title: `# Task <NUM>: <Title>` — number tasks sequentially within the epic.
 - Flat header fields for epic, status, dependencies (not nested under H2s).
 - `## Goal` (not "Description"), `## Context` (background + technical notes), `## Implementation` (numbered sub-sections with file paths), `## Acceptance criteria` (checkboxes).
@@ -155,7 +164,7 @@ After all readiness sections are complete, break the approved plan into discrete
   **C)** Edit — describe what to merge, split, or re-scope.
   Never silently skip this approval step.
 
-**Update the EPIC file first when it already exists.** If no epic exists yet, create `tasks/<EPIC_NAME>/EPIC.md` using `EPIC_TEMPLATE.md` (same directory as this skill file). The epic is the source of truth for goal, architecture overview, task list summaries, key decisions, and anti-goals. Finalize/update it after task files are written so the task list is complete.
+**Update the EPIC file first when it already exists.** If no epic exists yet, create `tasks/<EPIC_NAME>/EPIC.md` using `epic-template.md` (same directory as this skill file). The epic is the source of truth for goal, architecture overview, task list summaries, key decisions, and anti-goals. Finalize/update it after task files are written so the task list is complete.
 
 **Deferred work becomes task files too.** For each item from the "NOT in scope" section that has future value, create a task file using the same template. Mark its status as `[ ]` (pending) and add a `## Deferred` section explaining: **Why deferred** (rationale), **Revisit when** (trigger condition or timeframe). These live alongside the other task files in the epic — they're just not part of the current execution plan. **Cross-reference:** Add the deferred task to the `## Relates to` section of the original task that surfaced it, and vice versa, so the connection is traceable in both directions.
 

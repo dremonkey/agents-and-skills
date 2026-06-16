@@ -37,7 +37,7 @@ Every spec should be:
    - Known unknowns and open decisions.
 
 3. **Draft the component architecture**
-   - Use the template in `SPEC_TEMPLATE.md`.
+   - Use the template in `spec-template.md`.
    - Include concrete interfaces, data flow, and failure handling.
    - Prefer explicit decisions over abstract language.
 
@@ -93,4 +93,4 @@ Every spec should be:
 
 ## Additional resources
 
-- Spec template: `SPEC_TEMPLATE.md`
+- Spec template: `spec-template.md`

@@ -75,7 +75,7 @@ Task files live under `tasks/<EPIC_NAME>/`. Before creating files:
 ## Step 5: Create task files
 
 For each approved item, create a task file using the template from
-`skills/plan-eng-tasks/TASK_TEMPLATE.md`. Read it before generating files.
+`skills/plan-eng-tasks/task-template.md`. Read it before generating files.
 
 Populate the task from what the comment and surrounding code tell you:
 
