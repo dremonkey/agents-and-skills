@@ -1,6 +1,6 @@
 ---
 name: exec-eng-tasks
-version: 1.0.0
+version: 1.1.0
 description: |
   Dispatches sub-agents to implement tasks from a plan produced by plan-eng-tasks.
   Reads task files and EPICs from tasks/<EPIC_NAME>/, manages parallel execution
@@ -13,7 +13,8 @@ allowed-tools:
   - Grep
   - Glob
   - Bash
-  - Task
+  - Agent
+  - SendMessage
   - AskUserQuestion
 ---
 
@@ -108,21 +109,18 @@ All sub-agent worktrees will branch off this feature branch. All completed work 
 For each approved task (respecting dependency order), spawn a sub-agent using the Agent tool:
 
 **Sub-agent configuration:**
-* **Model:** `sonnet` — use the `model` parameter on the Agent tool.
+* **Model:** choose per task using the plan's size estimate. Small/medium tasks with a tight Implementation section: pass `model: "sonnet"`. Large tasks, or tasks with genuine design ambiguity: omit the `model` parameter so the agent inherits the session model.
+* **Context-heavy tasks:** when a task leans heavily on planning-conversation context that the task file doesn't fully capture (decisions, diagrams, discussion), consider `subagent_type: "fork"` — the fork inherits the full conversation, so the prompt only needs the task file reference and the pre-flight contract. Forks always run on the session model (no sonnet discount), so reserve them for the hard tasks.
 * **Prompt construction:** Read the task file and construct a prompt that includes:
   1. The full task file content (Goal, Context, Implementation sections, Acceptance criteria).
   2. Any relevant context from readiness (constraints, decisions, engineering preferences, diagrams).
-  3. **Pre-flight contract** — every sub-agent prompt MUST include the following block. It exists to defend against stale or empty worktree bases, which sub-agents would otherwise mask by silently re-implementing dependencies from scratch.
+  3. **Pre-flight contract** — every sub-agent prompt MUST include the following block. The WorktreeCreate hook forks worktrees from the feature branch's HEAD; this contract is the second line of defense against a stale base, which sub-agents would otherwise mask by silently re-implementing dependencies from scratch.
      - **Expected base commit:** the current `BASE_SHA` (refreshed after every merge in Step 5).
      - **First action instruction:** "Your first action is to run `git log -1` (or the equivalent) and confirm your worktree is at `<BASE_SHA>`. If the SHA does not match, STOP and report a stale-base error — do not proceed and do not implement anything from scratch."
-     - **Inventory block** — generated from the actual repo state at `BASE_SHA`:
-       - List file/directory paths that prior tasks have committed and that this task is expected to depend on.
-       - For each, name the module/component and a one-line description of its role. Point to the originating task file for the full contract; do not duplicate the contract.
-       - Cover the dependency graph for this task: anything the task's `Depends on` chain produced.
-     - **Hard rule for the sub-agent:** "If a file or module listed in the inventory is missing from your worktree, STOP and report it — do NOT reimplement listed dependencies from scratch under any circumstances. The inventory is the contract; an absent file means the worktree is stale, not that the file should be created."
+     - **Dependency inventory:** list the file/directory paths committed by tasks in this task's `Depends on` chain, one line each, pointing to the originating task file for the full contract. Hard rule for the sub-agent: "If a listed file is missing from your worktree, STOP and report it — a missing file means the worktree base is stale, never that you should recreate it."
   4. The sub-agent behavioral rules below.
-* **Parallelism:** Tasks with no unresolved dependencies SHOULD run in parallel. When a group finishes, dispatch the next group.
-* **Always run in background:** Use `run_in_background: true` for ALL sub-agent dispatches — even single tasks and the last task in a group. This keeps the conversation responsive so the user can interact with you while agents work. You will be notified when each agent completes.
+* **Parallelism:** Tasks with no unresolved dependencies SHOULD run in parallel — dispatch them in a single message. When a group finishes, dispatch the next group.
+* **Background execution:** Sub-agents run in the background automatically; you are notified as each one completes and the conversation stays responsive in the meantime. Do not block waiting on a single agent.
 * **Isolation:** Use `isolation: "worktree"` so each sub-agent works on an isolated copy and can't conflict with others.
 
 **Sub-agent behavioral rules:** Read `skills/shared/sub-agent-rules.md` and include its contents verbatim in every sub-agent prompt.
@@ -131,12 +129,17 @@ For each approved task (respecting dependency order), spawn a sub-agent using th
 
 As sub-agents complete (or get stuck):
 
-**On success:** The sub-agent will have committed its changes in the worktree. The agent result includes the **worktree path** and **branch name**. Review the sub-agent's output summary. Check:
-- Did it touch only the expected files?
-- Did it write the required tests?
-- Any deviations — are they justified?
+**On success:** The sub-agent will have committed its changes in the worktree. The agent result includes the **worktree path** and **branch name**.
 
-If the work looks good, **squash-merge the worktree branch into the feature branch:**
+**Pre-merge verification:** Do not merge on the implementing agent's word alone. Spawn a reviewer sub-agent (`model: "sonnet"`) whose prompt contains the task file's acceptance criteria and instructs it to read the actual diff (`git -C <worktree> diff <BASE_SHA> HEAD`) and verify:
+- Every acceptance criterion is met by the diff, not just claimed.
+- The specified tests exist and pass when run in the worktree.
+- Only expected files were touched; deviations are justified.
+- No dependency from the inventory was reimplemented from scratch.
+
+The reviewer returns PASS or a list of concrete problems. On problems, send them back to the implementing agent via SendMessage (see "On failure or questions" below) rather than fixing them yourself — the implementing agent still has full task context.
+
+If verification passes, **squash-merge the worktree branch into the feature branch:**
 
 ```bash
 git merge --squash <worktree-branch> && git commit -m "<task-filename>: <brief summary of changes>"
@@ -165,7 +168,7 @@ Compound commands that combine `cd` with `git` trigger a security approval ("bar
 - **Overlapping edits to the same file:** Use context from both task files to combine changes. Prefer the version from the task that "owns" the area being edited per the dependency graph.
 - If a conflict is entirely mechanical (path remapping, import fixups), resolve it without escalating. Only escalate semantic conflicts where intent is ambiguous.
 
-**On failure or questions:** Act as the engineering manager. Use context from the planning phase to answer the sub-agent's question or unblock it. You have full context on:
+**On failure or questions:** Act as the engineering manager. Use SendMessage to continue the conversation with the stuck sub-agent — answer its question or give corrective guidance so the same agent finishes with its context intact. Do not respawn from scratch unless the agent is unrecoverable. Use context from the planning phase to answer the sub-agent's question or unblock it. You have full context on:
 - Architecture decisions and their rationale
 - Engineering preferences
 - The dependency graph and how tasks fit together
