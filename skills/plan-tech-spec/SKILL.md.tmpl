@@ -1,16 +1,18 @@
 ---
 name: plan-tech-spec
-version: 1.4.0
-model: opus
+version: 1.5.0
 description: |
   CTO-level technical plan review for implementation readiness and risk control.
   Use this skill to deeply review architecture, failure modes, security, tests,
   performance, observability, and rollout posture before execution.
 allowed-tools:
   - Read
+  - Write
+  - Edit
   - Grep
   - Glob
   - Bash
+  - Agent
   - AskUserQuestion
 ---
 
@@ -37,11 +39,7 @@ Before creating architecture artifacts, read the existing docs in `docs/architec
 Rule of thumb: if the feature is described in terms of an existing system ("add X to the Y pipeline"), it belongs in Y's architecture doc, not its own.
 
 ## AskUserQuestion Format
-For each AskUserQuestion:
-1. **Re-ground:** state project, branch, and current decision needed.
-2. **Simplify:** explain the issue in plain language.
-3. **Recommend:** `RECOMMENDATION: Choose [X] because [reason]`.
-4. **Options:** `A) ... B) ... C) ...`.
+Explain the issue in plain language in the question text. List the recommended option first with "(Recommended)" appended to its label, and put the reasoning and tradeoffs in the option descriptions. Batch related decisions as separate questions within one call (up to 4 per call).
 
 ## Review Modes
 Choose one mode and stick to it:
@@ -62,6 +60,13 @@ consider low-severity — with an estimated severity and a confidence level. Do 
 filter for importance while reviewing; ranking and filtering happen only when
 assembling Required Outputs. It is better to surface a finding that gets ranked out
 of the top list than to silently drop one.
+
+## Sub-agent usage during review
+Use the Agent tool (prefer the `Explore` agent type — read-only, built for
+fan-out searches) when a section requires surveying many files or subsystems
+independently — e.g., one explorer per touched subsystem to gather evidence
+for the architecture or data-flow sections. Spawn these in parallel in a
+single turn. Do NOT spawn a sub-agent for work a single Read or Grep answers.
 
 ## Pre-Review System Audit
 Run:
