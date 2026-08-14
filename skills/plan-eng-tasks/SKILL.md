@@ -1,7 +1,6 @@
 ---
 name: plan-eng-tasks
-version: 3.1.0
-model: opus
+version: 3.2.0
 description: |
   Eng manager-mode execution planning. Converts approved scope into a
   dependency-aware task plan and generates task files. Uses plan-tech-spec
@@ -50,10 +49,11 @@ This skill's primary artifacts are:
 3. **Updated architecture docs (when needed)** - capture implementation details discovered during execution planning that materially change or clarify architecture in `docs/architecture/`. Architecture docs are organized by system or topic, not by initiative.
 
 ## Sub-agent usage during planning
-Use the Agent tool to fan out read-only exploration when decomposition requires
-surveying many files or subsystems independently — e.g., one explorer per provider
-package, or per touched subsystem, to confirm what already exists and where task
-boundaries should fall. Spawn these in parallel in a single turn. Do NOT spawn a
+Use the Agent tool (prefer the `Explore` agent type — it is read-only and built
+for fan-out searches) when decomposition requires surveying many files or
+subsystems independently — e.g., one explorer per provider package, or per
+touched subsystem, to confirm what already exists and where task boundaries
+should fall. Spawn these in parallel in a single turn. Do NOT spawn a
 sub-agent for work you can complete directly with a single Read or Grep.
 Implementation dispatch stays with `exec-eng-tasks` — never implement from here.
 
@@ -94,7 +94,7 @@ If a CTO review exists, map its outputs into execution constraints:
 * Ensure each critical entry in the **Failure Modes Registry** is covered by tests, handling work, or a clear non-goal.
 * If no CTO review exists, run only a lightweight sanity pass to identify blockers for decomposition (do not do a full technical diligence pass).
 
-**STOP.** Batch issues from this section into AskUserQuestion calls — up to 3-5 issues per call, grouped by theme. Each issue still needs its own numbered entry with lettered options, a recommendation, and a WHY. Only proceed to the next section after ALL issues in this section are resolved.
+**STOP.** Batch issues from this section into AskUserQuestion calls — one question per issue, up to 4 per call, grouped by theme. Only proceed to the next section after ALL issues in this section are resolved.
 
 ### 2. Task decomposition and dependency graph
 Evaluate:
@@ -105,7 +105,7 @@ Evaluate:
 * Is each task scoped to minimal diff while still satisfying acceptance criteria?
 * Are existing ASCII diagrams in touched files still accurate after proposed changes?
 
-**STOP.** Batch issues from this section into AskUserQuestion calls — up to 3-5 issues per call, grouped by theme. Each issue still needs its own numbered entry with lettered options, a recommendation, and a WHY. Only proceed to the next section after ALL issues in this section are resolved.
+**STOP.** Batch issues from this section into AskUserQuestion calls — one question per issue, up to 4 per call, grouped by theme. Only proceed to the next section after ALL issues in this section are resolved.
 
 ### 3. Test and rollout readiness
 Build an execution-readiness checklist:
@@ -116,20 +116,17 @@ Build an execution-readiness checklist:
 
 For LLM/prompt changes: check the "Prompt/LLM changes" file patterns listed in CLAUDE.md. If this plan touches ANY of those patterns, state which eval suites must be run, which cases should be added, and what baselines to compare against. Then use AskUserQuestion to confirm the eval scope with the user.
 
-**STOP.** Batch issues from this section into AskUserQuestion calls — up to 3-5 issues per call, grouped by theme. Each issue still needs its own numbered entry with lettered options, a recommendation, and a WHY. Only proceed to the next section after ALL issues in this section are resolved.
+**STOP.** Batch issues from this section into AskUserQuestion calls — one question per issue, up to 4 per call, grouped by theme. Only proceed to the next section after ALL issues in this section are resolved.
 
 ## CRITICAL RULE — How to ask questions
-Batch up to 3-5 related issues into a single AskUserQuestion call, grouped by section or theme. Each issue within the batch MUST: (1) have its own numbered entry, (2) present 2-3 concrete lettered options, (3) state which option you recommend FIRST, (4) explain in 1-2 sentences WHY that option over the others, mapping to engineering preferences. No yes/no questions. Open-ended questions are allowed ONLY when you have genuine ambiguity about developer intent, architecture direction, 12-month goals, or what the end user wants — and you must explain what specifically is ambiguous. **Exception:** SMALL CHANGE mode batches all issues into a single AskUserQuestion at the end — but each issue in that batch still requires its own recommendation + WHY + lettered options.
+Batch related issues as separate questions within a single AskUserQuestion call (up to 4 questions per call), grouped by section or theme. For each question: present 2-3 concrete options, list the recommended option FIRST with "(Recommended)" appended to its label, and put the WHY — mapped to engineering preferences — in the option descriptions. No yes/no questions. Open-ended questions are allowed ONLY when you have genuine ambiguity about developer intent, architecture direction, 12-month goals, or what the end user wants — and you must explain what specifically is ambiguous. **Exception:** SMALL CHANGE mode batches all issues into AskUserQuestion calls at the end instead of per-section — the same per-question rules apply.
 
 ## For each issue you find
 For every specific issue (bug, smell, design concern, or risk):
-* **Batch issues into AskUserQuestion calls** — up to 3-5 per call, grouped by theme. Each issue still gets its own numbered entry.
+* **Batch issues into AskUserQuestion calls** — one question per issue, up to 4 per call, grouped by theme.
 * Describe the problem concretely, with file and line references.
-* Present 2–3 options, including "do nothing" where that's reasonable.
-* For each option, specify in one line: effort, risk, and maintenance burden.
-* **Lead with your recommendation.** State it as a directive: "Do B. Here's why:" — not "Option B might be worth considering." Be opinionated. I'm paying for your judgment, not a menu.
-* **Map the reasoning to my engineering preferences above.** One sentence connecting your recommendation to a specific preference (DRY, explicit > clever, minimal diff, etc.).
-* **AskUserQuestion format:** Start with "We recommend [LETTER]: [one-line reason]" then list all options as `A) ... B) ... C) ...`. Label with issue NUMBER + option LETTER (e.g., "3A", "3B").
+* Present 2–3 options, including "do nothing" where that's reasonable. Each option's description states effort, risk, and maintenance burden in one line.
+* **Recommend one option** and connect it to a specific engineering preference (DRY, explicit > clever, minimal diff, etc.) in its description. Be opinionated — I'm paying for your judgment, not a menu.
 * **Escape hatch:** If a section has no issues, say so and move on. If an issue has an obvious fix with no real alternatives, state what you'll do and move on — don't waste a question on it. Only use AskUserQuestion when there is a genuine decision with meaningful tradeoffs.
 * **Minor choices are not issues.** For task naming, file naming, ordering among dependency-equivalent tasks, or template phrasing, pick a reasonable option and note it in the output — never spend an AskUserQuestion slot on it. Questions are for scope, sequencing risk, and decisions the user would want to overrule.
 
@@ -155,13 +152,12 @@ After all readiness sections are complete, break the approved plan into discrete
 - Status uses `[ ]` pending, `[~]` in progress, `[x]` done, `[!]` failed/blocked.
 
 **Rules for task decomposition:**
-* Each task should be completable by a single sub-agent in one session. If a task is "large", consider splitting it.
+* Split tasks on file-ownership boundaries, not size. A single sub-agent handles a large, multi-file task in one session; two tasks editing the same files in conflicting ways cause merge pain. Prefer fewer, coarser tasks — only split when the pieces touch disjoint files or a dependency boundary genuinely separates them.
 * Tasks must have clear boundaries — no two tasks should modify the same file in conflicting ways. If unavoidable, make one block the other.
 * Order tasks by dependency graph. Tasks with no dependencies come first.
-* Present all proposed tasks in a single AskUserQuestion for batch approval. For each task, show: number, title, size estimate, and dependencies. Then offer:
-  **A)** Approve all tasks as shown.
-  **B)** Select/deselect individual tasks — list the numbers to change.
-  **C)** Edit — describe what to merge, split, or re-scope.
+* Present all proposed tasks in the message first — number, title, size estimate, and dependencies for each. Then ask for batch approval with AskUserQuestion:
+  - Epics with ≤4 tasks: use `multiSelect: true` with one option per task (label: number + title; description: size + dependencies) so the user selects exactly which tasks to approve.
+  - Larger epics: offer "Approve all tasks as shown" (recommended), "Select/deselect individual tasks — list the numbers to change", and "Edit — describe what to merge, split, or re-scope".
   Never silently skip this approval step.
 
 **Update the EPIC file first when it already exists.** If no epic exists yet, create `tasks/<EPIC_NAME>/EPIC.md` using `epic-template.md` (same directory as this skill file). The epic is the source of truth for goal, architecture overview, task list summaries, key decisions, and anti-goals. Finalize/update it after task files are written so the task list is complete.
@@ -200,10 +196,8 @@ At the end of readiness, fill in and display this summary so the user can see al
 Check the git log for this branch. If there are prior commits suggesting a previous review cycle (e.g., review-driven refactors, reverted changes), note what was changed and whether the current plan touches the same areas. Be more aggressive reviewing areas that were previously problematic.
 
 ## Formatting rules
-* NUMBER issues (1, 2, 3...) and give LETTERS for options (A, B, C...).
-* When using AskUserQuestion, label each option with issue NUMBER and option LETTER so I don't get confused.
-* Recommended option is always listed first.
-* Keep each option to one sentence max. I should be able to pick in under 5 seconds.
+* Recommended option is always listed first, with "(Recommended)" appended to its label.
+* Keep option labels short; put detail in descriptions. I should be able to pick in under 5 seconds.
 * After each review section, pause and ask for feedback before moving on.
 
 ## Unresolved decisions
